@@ -64,6 +64,11 @@ Yes. Both plugins share the same database table prefix convention (`bfmtl_grows`
 
 The plugin creates its database table in the current site's table prefix, making it compatible with multisite installations where each sub-site has its own set of tables.
 
+== Screenshots ==
+
+1. The Grow Tracker admin table showing 12 grow cycles with variety, tray size, seeded date, expected harvest, and status (Active / Harvested / Failed).
+2. The Add New Grow form — variety, tray size, seeded date, expected harvest date, and status dropdown.
+
 == Changelog ==
 
 = 1.0.0 — 2026-08-15 =

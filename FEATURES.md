@@ -19,23 +19,20 @@ you have already logged.
 The variety is a taxonomy term rather than a text field, so the names build up
 as you use them and a typo does not become a second variety.
 
-**Verify:** `wp post list --post_type=mgtrack_tray`
+**Check your trays from the command line:** `wp post list --post_type=mgtrack_tray`
 
 ## Dates
 
 A date is checked before anything is written, and refused with the value quoted
 back if it cannot be read.
 
-The check is `checkdate()`, not a pattern match. `2026-02-30` has exactly the
-right shape and is not a day; the previous version accepted it, passed it to a
-`DATE NOT NULL` column, and told the grower the record had been added while the
-database was rejecting it.
+The check is a real calendar check, not a pattern match. `2026-02-30` has
+exactly the right shape and is not a day, so it is refused rather than stored.
+You are never told a tray was saved when it was not.
 
 `03/14/2026` is refused rather than guessed at. Reading it as the 3rd of
 February would silently record the wrong day for anyone whose locale writes
 dates the other way round.
-
-**Verify:** the eight cases in `tests/Unit/TrayDateTest.php`.
 
 ## Status
 
@@ -58,16 +55,11 @@ are decided here, once.
 
 ## The list
 
-Twenty-five trays to a page, ordered and paged **in the database**. The previous
-version fetched every row, sorted the whole set in PHP with `usort` and then
-sliced twenty-five out of it — beneath a readme advertising no record cap.
+Twenty-five trays to a page, sorted and paged **in the database**, so the screen
+stays fast whether you have logged thirty trays or three thousand.
 
-Sorting by variety orders by the record title, which the database does
-case-insensitively. `strcmp` put "Zucchini" above "amaranth".
-
-**Verify:** `tests/integration-checks.php` seeds thirty trays and asserts that
-one page returns twenty-five of them, with the total still reported so
-pagination works.
+Sort by variety or by seeded date, in either direction. Variety sorting ignores
+case, so "amaranth" files with "Amaranth" rather than after "Zucchini".
 
 ## Deleting
 
@@ -84,7 +76,8 @@ read. Activating 1.1.0 imports those rows into the shared record:
 - statuses become the milestone that produced them, since status is derived here;
 - the old table is left in place. Nothing is dropped.
 
-**Verify:** `wp option get bfmt_legacy_import`
+**Check the import ran:** `wp option get bfmt_legacy_import` reports how many
+rows were brought across, skipped and failed.
 
 ## Extension points
 
@@ -106,3 +99,69 @@ read. Activating 1.1.0 imports those rows into the shared record:
 - No email, no cron, no scheduled work.
 - No database tables of its own.
 - Two options, both removed on uninstall.
+
+---
+
+## Free and Pro
+
+This plugin is the base of a pair. Pro is an add-on: it extends this plugin
+rather than replacing it, so there is one tray record, one place your data
+lives, and nothing to migrate when you upgrade.
+
+| | Pro — $125 | Free |
+|---|---|---|
+| Record a tray: variety, size, seeded date | Yes | Yes |
+| Expected harvest date you type | Yes | Yes |
+| Tray list with status, sortable, paged | Yes | Yes |
+| Trays kept on uninstall | Yes | Yes |
+| **Expected harvest worked out from the variety** | Yes | — |
+| **Soak, weight on, darkness lifted, germination milestones** | Yes | — |
+| **Seven-state grow cycle instead of three** | Yes | — |
+| **Seed variety library** — days to harvest, soak, seed rate, bag price | Yes | — |
+| **Yield and germination rates per variety** | Yes | — |
+| **Cost per tray, and expense tracking** | Yes | — |
+| **Rack and location grid** | Yes | — |
+| **Harvest planning, backwards from a delivery date** | Yes | — |
+| **Task calendar** | Yes | — |
+| **Reports** | Yes | — |
+| **Farm Worker role** | Yes | — |
+| **Front-end forms and board** — five shortcodes | Yes | — |
+| **Daily digest email** | Yes | — |
+| **Public availability list for customers** | Yes | — |
+
+### Why the missing rows cost you
+
+**You are doing the arithmetic.** This plugin stores the harvest date you type.
+Every time you sow a tray you work out, in your head or on paper, when it will
+be ready — from the variety, the season and how heavily you seeded. Pro keeps a
+variety library with each crop's days-to-harvest range and fills that date in
+for you. Get it wrong on one tray and you cut early; get it wrong on a delivery
+week and you are short.
+
+**Three states cannot describe a grow.** Active, harvested, failed is enough to
+keep a log. It is not enough to run a room. Pro tracks soaking, seeded,
+germinating and growing as distinct states with the milestone dates that
+produced them — so you can see at a glance which trays come off blackout today
+and which are overdue, instead of walking the racks to find out.
+
+**You cannot tell which varieties pay.** Without seed weight, yield weight and
+cost per tray, every crop looks equally worthwhile. Pro records what went in and
+what came out, and reports yield, germination rate and cost per gram by variety.
+That is the number that decides what you sow next season.
+
+**Nobody else can log a tray.** This plugin is a wp-admin screen, so anyone who
+touches it needs a WordPress account with editing rights. Pro adds a Farm Worker
+role and five front-end shortcodes, so staff log trays and milestones from a
+phone in the grow room without ever seeing wp-admin.
+
+**You are remembering where everything is.** Pro's rack and location grid tracks
+occupancy across shelves and slots, blocks a slot that is already full, and
+plans a harvest backwards from the date you need the crop.
+
+### Get Pro
+
+**https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/**
+
+One payment, no subscription, lifetime licence for one site. Pro requires this
+plugin to be installed and active — it is an add-on, not a replacement, and
+every tray you have already logged carries straight over.

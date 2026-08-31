@@ -1,86 +1,97 @@
-=== BlueFairy Microgreen Tracker Lite ===
-Contributors:      bluefairydevelopment
-Tags:              microgreens, farm management, grow log, plant tracker, gardening
-Requires at least: 6.4
-Tested up to:      7.0
-Requires PHP:      8.1
-Stable tag:        1.0.0
-License:           GPL-2.0-or-later
-License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+=== BlueFairy Microgreen Tracker ===
+Contributors: bluefairydevelopment
+Tags: microgreens, farm, growing, tracker, agriculture
+Requires at least: 6.5
+Tested up to: 7.1
+Requires PHP: 8.1
+Stable tag: 1.1.0
+License: GPL-2.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Track microgreen grow cycles from seeding to harvest — right inside your WordPress admin.
+A grow log for microgreen trays. Record what you planted and when it should be ready, and see at a glance what is still growing.
 
 == Description ==
 
-BlueFairy Microgreen Tracker Lite gives micro-farm growers a simple, clean log to track every tray from seeding to harvest. Add a record with the variety name, tray size, seeded date, expected harvest date, and current status. Update status as trays move from active to harvested or failed.
+If you grow microgreens you already keep this record somewhere — a notebook, a whiteboard, a spreadsheet that only opens on one computer. This plugin keeps it in WordPress instead, where you can reach it from the phone in your pocket while you are standing in front of the rack.
 
-**Features include:**
+= What you record =
 
-* Custom database table — no post-type bloat, no WooCommerce dependency.
-* Full add / edit / delete workflow with bulk delete support.
-* Sortable list table with colour-coded status badges (Active, Harvested, Failed).
-* Data is preserved on deactivation and only removed when you explicitly uninstall the plugin.
-* No record cap — log as many grow cycles as you need.
+* **Variety** — pea shoots, sunflower, radish, whatever you grow. Varieties build up as you use them, so the second tray of sunflower picks the name you already typed.
+* **Tray size** — 10×20, half tray, or your own words for it.
+* **Seeded** — the day it went in.
+* **Expected harvest** — the day you think it comes out. Optional.
 
-**Want more?** [Upgrade to BlueFairy Microgreen Tracker Pro](https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker/) for yield and germination tracking, per-grow notes, CSV export, rack/location grid, harvest planning, task calendar, reports, expense tracking, and worker shortcodes.
+= What you see =
+
+Every tray in one list, newest first, with a coloured badge showing whether it is still going, has been cut, or failed. Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
+
+= What it does not do =
+
+It does not calculate anything, chase you with reminders, or ask you to configure it. It is a log. Adding a tray takes four fields and one button.
+
+= Where the record lives =
+
+Trays are ordinary WordPress records, so they are in your database backup along with everything else, they survive deactivating the plugin, and **they are not deleted when you uninstall it**. If you later add Microgreen Tracker Pro, every tray you have already logged is simply there — the two plugins share one record rather than each keeping their own.
+
+== Microgreen Tracker Pro ==
+
+The paid add-on installs alongside this plugin and keeps everything you have logged. It adds:
+
+* Expected harvest worked out for you, from the variety and how long it takes
+* The full grow cycle — soaking, weight on, darkness lifted, germination, harvest
+* Yield and germination rates per variety, and cost per tray
+* A rack and location grid, so you know what is where
+* Harvest planning that works backwards from the date you need the crop
+* A task calendar, expense tracking and reports
+* A Farm Worker role and front-end forms, so staff log trays without seeing wp-admin
+* A daily digest email
+
+https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/
 
 == Installation ==
 
-1. Upload the `bluefairy-microgreen-tracker-lite` folder to the `/wp-content/plugins/` directory, or install via **Plugins > Add New**.
-2. Activate the plugin through the **Plugins** screen in WordPress.
-3. Navigate to **Settings > Grow Tracker** to start logging your grows.
+1. Upload the `bluefairy-microgreen-tracker` folder to `/wp-content/plugins/`, or install the zip through **Plugins → Add New → Upload Plugin**.
+2. Activate it.
+3. **Microgreens** appears in the admin menu. Add your first tray.
 
 == Frequently Asked Questions ==
 
-= Does this plugin require WooCommerce? =
+= Will I lose my trays if I deactivate or uninstall? =
 
-No. The Lite plugin is completely standalone and has no WooCommerce dependency.
+No. Deactivating changes nothing, and uninstalling removes only this plugin's own settings. Your trays are your records; a plugin should not delete them because you removed it.
 
-= Is my data deleted when I deactivate the plugin? =
+= Is there a limit on how many trays I can log? =
 
-No. Your grow records are preserved when you deactivate the plugin. Data is only deleted when you choose **Delete** from the Plugins screen (which triggers the uninstall routine).
+No, and the list is built to mean it: each page is a separate database query rather than the whole table loaded and cut down afterwards.
 
-= What does the Pro version add? =
+= I used version 1.0.0, which kept its own table. =
 
-The Pro version adds:
+Activating 1.1.0 brings those rows across into the shared record automatically. It runs once, it does not duplicate anything if you activate twice, and it leaves the old table alone so nothing is lost either way.
 
-* Yield and germination tracking per tray
-* Per-grow notes
-* CSV export of all grow records
-* Rack/location grid to visualise where each tray is sitting
-* Harvest planning calendar
-* Task calendar and reminders
-* Reports and analytics (total yield, germination rate, best varieties)
-* Expense tracker (seed costs, supplies)
-* Worker shortcodes to expose public-facing dashboards for farm staff
+= Can my staff log trays without a WordPress login? =
 
-[Learn more about BlueFairy Microgreen Tracker Pro →](https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker/)
+They need an account, but not an admin one — that is what the Farm Worker role and the front-end forms in Pro are for.
 
-= Can I import Lite data into the Pro plugin if I upgrade? =
+= Does it need WooCommerce, or any other plugin? =
 
-Yes. Both plugins share the same database table prefix convention (`bfmtl_grows`) so a Pro upgrade migration can read Lite records directly.
-
-= Is this plugin compatible with multisite? =
-
-The plugin creates its database table in the current site's table prefix, making it compatible with multisite installations where each sub-site has its own set of tables.
+No.
 
 == Screenshots ==
 
-1. The Grow Tracker admin table showing 12 grow cycles with variety, tray size, seeded date, expected harvest, and status (Active / Harvested / Failed).
-2. The Add New Grow form — variety, tray size, seeded date, expected harvest date, and status dropdown.
+1. Microgreens — every tray, with its status at a glance.
+2. Adding a tray: variety, size, seeded date, expected harvest.
 
 == Changelog ==
 
-= 1.0.0 — 2026-08-15 =
-* Initial release.
-* Custom `{prefix}bfmtl_grows` table created via `dbDelta()`.
-* Admin menu under Settings > Grow Tracker.
-* WP_List_Table list view with sortable columns and bulk delete.
-* Add/edit form with nonce and capability enforcement.
-* Delete action (GET + nonce URL).
-* Upgrade to Pro action link and inline notice.
-
-== Upgrade Notice ==
+= 1.1.0 =
+* Rebuilt as the base plugin for Microgreen Tracker Pro, which now extends it rather than keeping its own separate copy of your trays. Buying Pro used to show an empty tracker, because the two plugins stored the same thing in different places.
+* Added: rows from 1.0.0's own table are brought across on activation, once, without touching the original.
+* Fixed: a date the database could not accept was reported as saved. Dates are now checked before anything is written, and refused with the value quoted back — including dates like 2026-02-30, which have the right shape and are not a day.
+* Fixed: the list loaded every row and sorted the whole set in PHP before showing twenty-five. Sorting and paging now happen in the query.
+* Fixed: sorting by variety put "Zucchini" above "amaranth".
+* Changed: deleting a tray moves it to the trash instead of destroying it.
+* Changed: the screen is its own menu rather than a page buried in Settings.
+* Changed: uninstalling no longer deletes your trays.
 
 = 1.0.0 =
-Initial release.
+* First release.

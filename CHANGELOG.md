@@ -1,25 +1,38 @@
 # Changelog
 
-All notable changes to BlueFairy Microgreen Tracker Lite are documented here.
+## [1.1.0] — 2026-08-31
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-This project adheres to [Semantic Versioning](https://semver.org/).
+Rebuilt as the base plugin for Microgreen Tracker Pro. The two plugins stored
+the same trays in different places and neither knew the other existed.
 
----
+### Fixed
 
-## [1.0.0] — 2026-08-15
+- A date the database could not accept was reported as saved. The required-field
+  check ran first, the format check then blanked the value, and the rejected
+  insert was reported as a success. Dates are validated with `checkdate()` before
+  anything is written and refused with the value quoted back — so `2026-02-30`,
+  which has the right shape and is not a day, no longer gets through.
+- The list loaded every row, sorted the whole set in PHP and sliced twenty-five
+  out of it, beneath a readme advertising no record cap. Ordering and paging
+  happen in the query.
+- Sorting by variety used `strcmp`, putting "Zucchini" above "amaranth".
 
 ### Added
-- Initial public release.
-- Custom `{prefix}bfmtl_grows` table created via `dbDelta()` on activation and version-checked on `plugins_loaded`.
-- Admin submenu registered under **Settings > Grow Tracker** (`manage_options` capability).
-- `WP_List_Table` subclass (`BFMTL_Grow_List_Table`) with sortable columns (Variety, Seeded Date, Expected Harvest, Status), bulk delete, and colour-coded status badges.
-- Add new grow form: Variety (required), Tray Size, Seeded Date (required), Expected Harvest Date, Status.
-- Edit grow form: pre-populated from database row, same validation as add.
-- Delete action via GET + nonce URL with confirmation dialog.
-- Bulk delete via WP_List_Table bulk actions, protected by nonce.
-- "Upgrade to Pro" link in the Plugins list table row.
-- Quiet light-blue upgrade notice at the bottom of every Grow Tracker page.
-- Transient-based notices survive POST → redirect cycles.
-- `uninstall.php` drops the table and removes plugin options on plugin deletion.
-- No record cap — unlimited grow records for all users.
+
+- One shared tray record: `mgtrack_tray`, the `mgtrack_seed` taxonomy, and a
+  field registry the Pro add-on contributes to rather than duplicating.
+- A derived three-state status, and the `bfmt_tray_status` filter Pro replaces
+  it at with its seven-state model.
+- A one-time import of 1.0.0's `wp_bfmtl_grows` table, tracked per row, leaving
+  the original in place.
+- Twenty unit tests and an integration check suite.
+
+### Changed
+
+- Deleting a tray moves it to the trash.
+- The screen is a top-level menu rather than a Settings sub-page.
+- Uninstalling no longer deletes trays.
+
+## [1.0.0]
+
+First release.

@@ -1,59 +1,46 @@
-# BlueFairy Microgreen Tracker Lite
+# BlueFairy Microgreen Tracker
 
-Track microgreen grow cycles from seeding to harvest — right inside your WordPress admin.
+A grow log for microgreen trays. This is the free base plugin;
+[Microgreen Tracker Pro](https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/)
+is an add-on that extends it and holds no copy of its work.
 
-**Version:** 1.0.0  
-**Requires WordPress:** 6.4+  
-**Requires PHP:** 8.1+  
-**License:** GPL-2.0-or-later
-
----
-
-## Description
-
-A lightweight, no-dependency grow-cycle logger for micro-farm operators. Records live in a dedicated custom table (`{prefix}bfmtl_grows`) — no CPTs, no WooCommerce.
-
-## Features
-
-- Add, edit, delete grow records (variety, tray size, seeded date, expected harvest, status)
-- Sortable WP_List_Table with colour-coded status badges
-- Bulk delete
-- Data preserved on deactivation; removed only on uninstall
-- Unlimited records (no trialware cap)
-
-## Installation
-
-1. Copy the plugin folder to `wp-content/plugins/`.
-2. Activate via **Plugins > Installed Plugins**.
-3. Go to **Settings > Grow Tracker**.
-
-## Upgrade to Pro
-
-[BlueFairy Microgreen Tracker Pro](https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker/) adds yield tracking, CSV export, harvest planning, rack management, task calendar, reports, expense tracking, and worker shortcodes.
-
-## File Structure
+## Architecture
 
 ```
-bluefairy-microgreen-tracker-lite.php   Plugin header + bootstrap
-includes/
-  class-plugin.php                      Hook registration, activation, deactivation
-  class-db.php                          Table creation, CRUD helpers, version check
-admin/
-  class-grow-admin.php                  Admin menu, add/edit form, delete handlers
-  class-grow-list-table.php             WP_List_Table extension
-uninstall.php                           Drop table, delete options on plugin deletion
+bluefairy-microgreen-tracker.php   constants, requires, bfmt_plugin() marker
+includes/class-tray.php            the tray record: post type, taxonomy, fields, CRUD
+includes/class-status.php          the derived status, and the filter Pro replaces it at
+includes/class-feature-registry.php the switches Pro adds its own to
+includes/class-migrator.php        1.0.0's table, imported once and left in place
+admin/                             the list, the form, the Pro panel
 ```
 
-## Development Notes
+`BFMT_Tray` is the only place that knows where a tray's data lives. Pro calls
+`register_field()` and answers `bfmt_tray_status`; it does not register the post
+type, the taxonomy, or any meta key.
 
-- `declare(strict_types=1)` in every PHP file.
-- All DB writes use `$wpdb->prepare()` or `$wpdb->insert()` / `$wpdb->update()` (which internally escape).
-- All output escaped via `esc_html()`, `esc_attr()`, `esc_url()`.
-- Nonces on every add, edit, delete, and bulk action.
-- `current_user_can('manage_options')` checked before any data read or write.
-- Constant prefix `BFMTL_` avoids collision with the Pro plugin (`BFMT_`).
-- Table suffix `bfmtl_grows` is compatible with the Pro plugin's upgrade migration.
+## The names are inherited, on purpose
 
-## Changelog
+`mgtrack_tray`, `mgtrack_seed` and every `_mgtrack_*` key come from the paid
+plugin's 1.3.3 model, because a real farm has trays stored under exactly those
+names. They are not re-prefixed to match the rest of the estate.
 
-See [CHANGELOG.md](CHANGELOG.md).
+The seeded date is `_mgtrack_seeding_date`. The retired free table called the
+same field `seeded_date`, and assuming the two matched cost an hour and a
+rewritten class.
+
+## Development
+
+```
+composer install
+vendor/bin/phpunit                                          # 20 unit tests
+wp eval-file .../tests/integration-checks.php               # from the site root
+```
+
+The unit tests have been checked against deliberate mutations: dropping
+`checkdate()`, reversing the harvested/failed precedence, and removing the
+status filter all turn the suite red.
+
+## Licence
+
+GPL-2.0-or-later.

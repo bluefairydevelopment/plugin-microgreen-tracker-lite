@@ -1,23 +1,17 @@
 <?php
 /**
- * Uninstall script — runs when the plugin is deleted from the Plugins screen.
+ * Uninstall.
  *
- * Removes the bfmtl_grows table and all plugin options.
- * Data is NOT removed on simple deactivation.
+ * Trays are NOT deleted. They are the grower's records, they are shared with
+ * the Pro add-on, and 1.0.0's uninstall dropped its table outright — which is
+ * how a season could vanish when someone tidied up after upgrading.
  *
- * @package BlueFairy\MicrogreenTrackerLite
+ * @package BlueFairy\MicrogreenTracker
  */
 
 declare(strict_types=1);
 
-// WordPress calls this file directly; bail if accessed any other way.
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit;
-}
+defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-db.php';
-
-BFMTL_DB::uninstall();
-
-// Remove any remaining plugin options not handled by BFMTL_DB::uninstall().
-delete_option( 'bfmtl_db_version' );
+delete_option( 'bfmt_features' );
+delete_option( 'bfmt_legacy_import' );

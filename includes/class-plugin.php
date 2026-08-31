@@ -1,61 +1,49 @@
 <?php
 /**
- * Core plugin bootstrap: hook registration, activation, deactivation.
+ * Base plugin bootstrap.
  *
- * @package BlueFairy\MicrogreenTrackerLite
+ * @package BlueFairy\MicrogreenTracker
  */
 
 declare(strict_types=1);
 
 defined( 'ABSPATH' ) || exit;
 
-class BFMTL_Plugin {
+class BFMT_Plugin {
 
 	/**
-	 * Called on plugins_loaded. Registers all runtime hooks.
+	 * Boot.
+	 *
+	 * bfmt_loaded fires BEFORE any of this plugin's own subsystems register.
+	 * The Pro add-on hooks it to declare its tray fields, its feature switches
+	 * and its status model, and all three have to be in place before the
+	 * registry, the settings screen or the list table read them.
 	 */
-	public static function init(): void {
-		// Check for DB upgrades on every load (lightweight — just compares option value).
-		BFMTL_DB::maybe_upgrade();
+	public static function boot(): void {
+		load_plugin_textdomain( 'bluefairy-microgreen-tracker', false, dirname( BFMT_BASENAME ) . '/languages' );
 
-		// Load translations.
-		load_plugin_textdomain( 'bluefairy-microgreen-tracker-lite', false, dirname( BFMTL_BASENAME ) . '/languages' );
+		BFMT_Tray::init();
+
+		do_action( 'bfmt_loaded' );
 
 		if ( is_admin() ) {
-			BFMTL_Grow_Admin::init();
+			BFMT_Tray_Admin::init();
+			BFMT_Pro_Upsell::init();
 		}
-
-		// Plugin action links (Plugins list screen).
-		add_filter( 'plugin_action_links_' . BFMTL_BASENAME, [ __CLASS__, 'action_links' ] );
 	}
 
 	/**
-	 * Add "Upgrade to Pro" link in the Plugins list table row.
+	 * Activation: bring any old table across, then get out of the way.
 	 *
-	 * @param string[] $links
-	 * @return string[]
-	 */
-	public static function action_links( array $links ): array {
-		$upgrade = sprintf(
-			'<a href="%s" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:600;">%s</a>',
-			esc_url( 'https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker/' ),
-			esc_html__( 'Upgrade to Pro', 'bluefairy-microgreen-tracker-lite' )
-		);
-		array_unshift( $links, $upgrade );
-		return $links;
-	}
-
-	/**
-	 * Runs on plugin activation. Creates the DB table.
+	 * The import is idempotent and leaves the old table alone, so activating
+	 * twice does not duplicate a grower's records and deactivating loses
+	 * nothing.
 	 */
 	public static function activate(): void {
-		BFMTL_DB::install();
-	}
+		BFMT_Tray::register();
 
-	/**
-	 * Runs on plugin deactivation. Data is NOT removed — only uninstall removes data.
-	 */
-	public static function deactivate(): void {
-		// Intentionally empty: data is preserved on deactivation per WP best practice.
+		if ( BFMT_Migrator::legacy_table_exists() ) {
+			BFMT_Migrator::run();
+		}
 	}
 }

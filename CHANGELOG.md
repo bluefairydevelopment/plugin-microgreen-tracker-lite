@@ -4,9 +4,14 @@
 
 ### Added
 - **Mark harvested**, **Mark failed** and **Mark growing** row actions. They
-  write the same milestones Pro records (`_mgtrack_harvest_date`,
-  `_mgtrack_failed`), each behind a nonce keyed to the action and the tray.
-  Until now nothing in the free plugin could finish a tray.
+  write `_mgtrack_harvest_date` and `_mgtrack_failed` as dates, the form Pro
+  reads, each behind a nonce keyed to the action and the tray. A repeat is
+  success without moving the recorded date; a trashed tray is refused. Until
+  now nothing in the free plugin could finish a tray.
+- The status links are hidden, and refused if requested, while Pro is active:
+  Pro records a harvest with its yield and sale, a failure with its reason,
+  and frees rack slots, and a one-click change here would skip all of that.
+- Every row link carries an `aria-label` naming its tray.
 
 ### Fixed
 - Fatal error on PHP 8.1: `BFMT_Tray::update()` and `validate()` declared a
@@ -14,8 +19,11 @@
 - The bulk-action menu below the list posts as `action2`; only `action` was
   read, so "Move to Trash" from the bottom menu did nothing.
 - The list's default sort inner-joined `_mgtrack_seeding_date`, dropping any
-  tray without one (a Pro tray started with a soak). It now sorts without
-  requiring the key.
+  tray without one (a Pro tray started with a soak). It now orders by a
+  NOT EXISTS clause keyed to the seeded date, so those trays appear, after the
+  dated ones in the default order.
+- The 1.0.0 importer stored a failure as `'1'`; Pro reads `_mgtrack_failed` as
+  a date. It now stores the row's expected date, else its seeded date.
 - The Pro panel claimed a harvest date "from how much seed you sowed" and
   "germination rates"; Pro uses each variety's days to harvest and reports
   yield, harvested and failed counts and cost per tray. It now lists the daily

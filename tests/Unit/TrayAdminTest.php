@@ -158,8 +158,49 @@ final class TrayAdminTest extends TestCase {
 		$this->assertSame( '2026-09-30', $GLOBALS['bfmt_meta'][1]['_mgtrack_harvest_date'] );
 	}
 
+	public function test_fail_records_today_as_a_date(): void {
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'fail', 'tray_id' => '1' ] );
+
+		$this->assertSame( '2026-09-30', $GLOBALS['bfmt_meta'][1]['_mgtrack_failed'] );
+	}
+
+	/**
+	 * A double click reports success, not "could not be changed".
+	 */
+	public function test_a_repeated_status_action_still_reports_success(): void {
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '1' ] );
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '1' ] );
+
+		$this->assertSame( [ 'updated', 'Tray marked harvested.' ], $this->notice() );
+	}
+
+	public function test_a_status_action_with_a_bad_nonce_changes_nothing(): void {
+		$GLOBALS['bfmt_nonce_ok'] = false;
+
+		$halt = $this->handle( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '1' ] );
+
+		$this->assertSame( 'nonce', $halt->kind );
+		$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ) );
+	}
+
+	public function test_every_writing_action_stops_at_a_bad_nonce(): void {
+		foreach ( [ 'trash', 'harvest', 'fail', 'reopen', 'bulk_trash', 'save' ] as $action ) {
+			bfmt_test_reset();
+			$GLOBALS['bfmt_types'][1] = 'mgtrack_tray';
+			$GLOBALS['bfmt_caps']     = [ 'edit_posts' => true ];
+			$GLOBALS['bfmt_nonce_ok'] = false;
+
+			$halt = $this->handle( [ 'page' => 'bfmt-trays', 'action' => $action, 'tray_id' => '1' ], [ 'tray_ids' => [ '1' ], 'variety' => 'Kale', 'seeding_date' => '2026-09-01' ] );
+
+			$this->assertSame( 'nonce', $halt->kind, $action );
+			$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ), $action );
+			$this->assertSame( [], bfmt_test_calls( 'wp_trash_post' ), $action );
+			$this->assertSame( [], bfmt_test_calls( 'wp_insert_post' ), $action );
+		}
+	}
+
 	public function test_reopen_undoes_a_finish(): void {
-		update_post_meta( 1, '_mgtrack_failed', '1' );
+		update_post_meta( 1, '_mgtrack_failed', '2026-09-01' );
 
 		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
 

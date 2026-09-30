@@ -23,7 +23,7 @@ If you grow microgreens you already keep this record somewhere — a notebook, a
 
 = What you see =
 
-Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
+Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. (With Microgreen Tracker Pro active, you record these from Pro's tray screens instead, where Pro also takes the yield or the reason.) Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
 
 = What it does not do =
 
@@ -38,7 +38,7 @@ Trays are ordinary WordPress records, so they are in your database backup along 
 The paid add-on installs alongside this plugin and keeps everything you have logged. It adds:
 
 * Expected harvest worked out for you, from each variety's days to harvest
-* The full grow cycle — soaking, weight on, darkness lifted, germination, harvest
+* The full grow cycle — soaking, weight on, germination, darkness lifted, harvest
 * Average yield, harvested and failed counts per variety, and cost per tray
 * A rack and location grid, so you know what is where
 * Harvest planning that works backwards from the date you need the crop
@@ -84,10 +84,11 @@ No.
 == Changelog ==
 
 = 1.1.1 =
-* Added: mark a tray harvested or failed from its row in the list, and put it back to growing if you marked the wrong one. Until now only trays imported from Lite, or recorded with Pro, could show as harvested or failed.
+* Added: mark a tray harvested or failed from its row in the list, and put it back to growing if you marked the wrong one. Until now only trays imported from Lite, or recorded with Pro, could show as harvested or failed. With Pro active these stay on Pro's screens, which record the yield and the reason too.
 * Fixed: the plugin stopped with a fatal error on PHP 8.1, the version it says it supports.
 * Fixed: "Move to Trash" chosen from the bulk-action menu below the list did nothing. Both menus work.
-* Fixed: a tray with no seeded date — one started with a soak in Pro — was missing from the list.
+* Fixed: a tray with no seeded date — one started with a soak in Pro — was missing from the list. It now appears, after the dated trays.
+* Fixed: trays imported from Lite as failed now record the date they failed, which Pro needs to show their days and cost.
 * Fixed: the Microgreen Tracker Pro panel described features Pro does not have: the harvest date "from how much seed you sowed" (it uses each variety's days to harvest) and "germination rates" (Pro reports yield, harvested and failed counts, and cost per tray). The panel now also lists Pro's daily digest email.
 * Fixed: the edit form promised Pro would fill in a blank expected harvest date. Pro only does that when a tray is added.
 * Changed: the screen's styling and its "Move this tray to the trash?" prompt load as a stylesheet and a script on the Microgreens screen only, instead of being written into each row. Status colours an add-on supplies must be hex colours; any other value shows the neutral badge.

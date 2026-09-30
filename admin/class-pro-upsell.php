@@ -51,7 +51,7 @@ class BFMT_Pro_Upsell {
 
 		$features = [
 			__( 'Expected harvest worked out for you, from each variety\'s days to harvest', 'bluefairy-microgreen-tracker' ),
-			__( 'The full grow cycle: soaking, weight on, darkness lifted, germination, harvest', 'bluefairy-microgreen-tracker' ),
+			__( 'The full grow cycle: soaking, weight on, germination, darkness lifted, harvest', 'bluefairy-microgreen-tracker' ),
 			__( 'Average yield, harvested and failed counts per variety, and cost per tray', 'bluefairy-microgreen-tracker' ),
 			__( 'A rack and location grid, so you know what is where', 'bluefairy-microgreen-tracker' ),
 			__( 'Harvest planning that works backwards from the date you need the crop', 'bluefairy-microgreen-tracker' ),

@@ -251,10 +251,8 @@ class BFMT_Tray {
 
 			$value = trim( (string) $fields[ $field ] );
 
-			// An unreadable date is refused, not silently blanked. The old free
-			// plugin replaced it with an empty string AFTER the required-field
-			// check, wrote that to a NOT NULL column, and reported success on an
-			// insert the database had rejected.
+			// An unreadable date is refused with the value quoted back, never
+			// silently blanked or stored.
 			if ( '' !== $value && ! self::is_date( $value ) ) {
 				return new WP_Error(
 					'bfmt_date_format',

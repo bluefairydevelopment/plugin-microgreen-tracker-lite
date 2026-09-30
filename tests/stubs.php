@@ -48,6 +48,8 @@ function bfmt_test_reset(): void {
 	$GLOBALS['bfmt_insert_error'] = null;
 	$GLOBALS['bfmt_query_args']   = null;
 	$GLOBALS['bfmt_query_result'] = [ 'posts' => [], 'found_posts' => 0, 'max_num_pages' => 0 ];
+	$GLOBALS['bfmt_statuses']     = [];
+	$GLOBALS['bfmt_nonce_ok']     = true;
 	$_GET = $_POST = $_REQUEST = [];
 }
 
@@ -89,7 +91,15 @@ function bfmt_test_request( array $get = [], array $post = [] ): void {
 // i18n and escaping
 // ---------------------------------------------------------------------------
 
-function __( $text, $domain = null ) { return $text; }
+/**
+ * Runs a 'gettext' callback if a test set one, so a test can hand the code a
+ * hostile translation and assert it comes out escaped.
+ */
+function __( $text, $domain = null ) {
+	$cb = $GLOBALS['bfmt_filters']['gettext'] ?? null;
+
+	return $cb ? $cb( $text ) : $text;
+}
 function _n( $single, $plural, $number, $domain = null ) { return 1 === (int) $number ? $single : $plural; }
 function esc_html( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
 function esc_attr( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
@@ -146,11 +156,24 @@ function plugin_basename( $file ) { return basename( dirname( (string) $file ) )
 function get_post_type( $id ) { return $GLOBALS['bfmt_types'][ $id ] ?? false; }
 function get_post_meta( $id, $key, $single = false ) { return $GLOBALS['bfmt_meta'][ $id ][ $key ] ?? ''; }
 
+/**
+ * Like core: false when the stored value is already $value, so code that treats
+ * false as failure is caught doing so.
+ */
 function update_post_meta( $id, $key, $value ) {
 	bfmt_test_record( 'update_post_meta', [ $id, $key, $value ] );
+
+	if ( array_key_exists( $key, $GLOBALS['bfmt_meta'][ $id ] ?? [] ) && $GLOBALS['bfmt_meta'][ $id ][ $key ] === $value ) {
+		return false;
+	}
+
 	$GLOBALS['bfmt_meta'][ $id ][ $key ] = $value;
 
 	return true;
+}
+
+function get_post_status( $id ) {
+	return isset( $GLOBALS['bfmt_types'][ $id ] ) ? ( $GLOBALS['bfmt_statuses'][ $id ] ?? 'publish' ) : false;
 }
 
 function delete_post_meta( $id, $key ) {
@@ -252,7 +275,17 @@ function delete_transient( $name ) {
 // ---------------------------------------------------------------------------
 
 function get_current_user_id() { return 5; }
-function current_time( $type ) { return '2026-09-30'; }
+/**
+ * Honours the format, so code asking for the wrong one gets a value that fails
+ * the date check instead of a date the stub made up.
+ */
+function current_time( $type ) {
+	return match ( $type ) {
+		'mysql'     => '2026-09-30 12:00:00',
+		'timestamp' => 1790769600,
+		default     => date( (string) $type, 1790769600 ),
+	};
+}
 function is_admin() { return (bool) $GLOBALS['bfmt_is_admin']; }
 
 function current_user_can( $cap, ...$args ) {
@@ -261,8 +294,17 @@ function current_user_can( $cap, ...$args ) {
 	return (bool) ( $GLOBALS['bfmt_caps'][ $cap ] ?? false );
 }
 
+/**
+ * Passes unless a test sets bfmt_nonce_ok = false; then it ends the request the
+ * way core does (wp_nonce_ays), so a handler that writes before checking is
+ * caught.
+ */
 function check_admin_referer( $action = -1, $name = '_wpnonce' ) {
 	bfmt_test_record( 'check_admin_referer', [ $action ] );
+
+	if ( ! $GLOBALS['bfmt_nonce_ok'] ) {
+		throw new BFMT_Test_Halt( 'nonce', $action );
+	}
 
 	return 1;
 }

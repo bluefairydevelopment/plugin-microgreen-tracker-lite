@@ -54,8 +54,8 @@ class BFMT_Tray_Admin {
 	/**
 	 * A top-level menu.
 	 *
-	 * 1.0.0 put this under Settings. It is a place to keep records, not a
-	 * setting, and burying it there cost the free plugin its one screen.
+	 * A place to keep records, not a setting, so it is its own menu rather
+	 * than a page under Settings.
 	 */
 	public static function register_menu(): void {
 		add_menu_page(
@@ -99,7 +99,7 @@ class BFMT_Tray_Admin {
 	 *
 	 * The list table has a bulk-action menu above AND below the table. The top
 	 * one posts as `action`, the bottom one as `action2`, and whichever was not
-	 * used arrives as "-1". Reading only `action` made the bottom menu a no-op.
+	 * used arrives as "-1". Both are read, so either menu works.
 	 */
 	public static function requested_action(): string {
 		foreach ( [ 'action', 'action2' ] as $field ) {
@@ -144,9 +144,17 @@ class BFMT_Tray_Admin {
 
 		check_admin_referer( 'bfmt_' . $action . '_tray_' . $tray_id );
 
+		// The list hides these while Pro is active (see
+		// BFMT_Tray_List_Table::status_actions()); a crafted or stale link is
+		// refused here too, so Pro's harvest, failure and rack records cannot
+		// be bypassed.
+		if ( BFMT_Pro_Upsell::pro_is_active() ) {
+			self::redirect_with_notice( [ 'error', __( 'With Microgreen Tracker Pro active, record harvests and failures from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
+		}
+
 		$done = match ( $action ) {
 			'harvest' => BFMT_Status::mark_harvested( $tray_id, current_time( 'Y-m-d' ) ),
-			'fail'    => BFMT_Status::mark_failed( $tray_id ),
+			'fail'    => BFMT_Status::mark_failed( $tray_id, current_time( 'Y-m-d' ) ),
 			default   => BFMT_Status::reopen( $tray_id ),
 		};
 
@@ -189,9 +197,8 @@ class BFMT_Tray_Admin {
 	/**
 	 * Save, and say what actually happened.
 	 *
-	 * 1.0.0 discarded the return value of its insert and reported success
-	 * unconditionally, so a date the database rejected was reported as "Grow
-	 * record added."
+	 * The result of the write decides the notice, so a refused save is never
+	 * reported as saved.
 	 */
 	private static function do_save(): void {
 		self::guard();

@@ -121,5 +121,29 @@ final class ProUpsellTest extends TestCase {
 		$this->assertSame( [ 'x' ], BFMT_Pro_Upsell::action_links( [ 'x' ] ) );
 		$this->assertStringContainsString( 'Left blank, Pro fills it in', BFMT_Tray_Admin::harvest_help( false ) );
 		$this->assertSame( 'Optional.', BFMT_Tray_Admin::harvest_help( true ) );
+
+		// With Pro on, the base list offers no status links, and a crafted one
+		// is refused before anything is written: Pro records harvests with
+		// yield and sale, failures with a reason, and frees rack slots.
+		$GLOBALS['bfmt_types'][9] = 'mgtrack_tray';
+		$GLOBALS['bfmt_caps']     = [ 'edit_posts' => true ];
+		$this->assertSame( [], BFMT_Tray_List_Table::status_actions( 9 ) );
+
+		bfmt_test_request( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '9' ] );
+		try {
+			BFMT_Tray_Admin::handle_actions();
+			$this->fail( 'the handler did not end the request' );
+		} catch ( BFMT_Test_Halt $halt ) {
+			$this->assertSame( 'redirect', $halt->kind );
+		}
+		$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ) );
+		$this->assertSame( 'error', $GLOBALS['bfmt_transients']['bfmt_notice_5'][0] );
+		$this->assertStringContainsString( "Pro's tray screens", $GLOBALS['bfmt_transients']['bfmt_notice_5'][1] );
+	}
+
+	public function test_without_pro_the_list_offers_the_status_links(): void {
+		$GLOBALS['bfmt_types'][9] = 'mgtrack_tray';
+
+		$this->assertSame( [ 'harvest', 'fail' ], array_keys( BFMT_Tray_List_Table::status_actions( 9 ) ) );
 	}
 }

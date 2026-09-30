@@ -215,7 +215,8 @@ final class MigratorTest extends TestCase {
 
 		$this->assertSame( '2026-01-10', $GLOBALS['bfmt_meta'][ $kale ]['_mgtrack_harvest_date'] );
 		$this->assertArrayNotHasKey( '_mgtrack_failed', $GLOBALS['bfmt_meta'][ $kale ] );
-		$this->assertSame( '1', $GLOBALS['bfmt_meta'][ $pea ]['_mgtrack_failed'] );
+		// A date, as Pro stores it: the expected date, else the seeded date.
+		$this->assertSame( '2026-01-03', $GLOBALS['bfmt_meta'][ $pea ]['_mgtrack_failed'] );
 		$this->assertArrayNotHasKey( '_mgtrack_harvest_date', $GLOBALS['bfmt_meta'][ $pea ] );
 		$this->assertArrayNotHasKey( '_mgtrack_harvest_date', $GLOBALS['bfmt_meta'][ $radish ] );
 		$this->assertArrayNotHasKey( '_mgtrack_failed', $GLOBALS['bfmt_meta'][ $radish ] );

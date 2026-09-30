@@ -2,10 +2,8 @@
 /**
  * Brings rows from the old bfmtl_grows table into the tray post type.
  *
- * 1.0.0 of the free plugin kept grows in its own table while the paid plugin
- * kept them as posts, and neither knew the other existed — so buying the paid
- * plugin showed an empty tracker, and then deleting the free one dropped the
- * table. This is the one-way door out of that.
+ * Microgreen Tracker Lite 1.0.0 kept grows in its own table, which the
+ * paid add-on could not read. This brings them into the shared tray record.
  *
  * It runs on activation, keeps the old table until the grower says otherwise,
  * and never imports the same row twice.
@@ -102,7 +100,8 @@ class BFMT_Migrator {
 			if ( 'harvested' === $row->status ) {
 				update_post_meta( $tray_id, '_mgtrack_harvest_date', (string) ( $row->expected_harvest_date ?: $row->seeded_date ) );
 			} elseif ( 'failed' === $row->status ) {
-				update_post_meta( $tray_id, '_mgtrack_failed', '1' );
+				// A date, not a flag: Pro reads the failure as the day it happened.
+				update_post_meta( $tray_id, '_mgtrack_failed', (string) ( $row->expected_harvest_date ?: $row->seeded_date ) );
 			}
 
 			update_post_meta( $tray_id, self::SOURCE_KEY, (int) $row->id );

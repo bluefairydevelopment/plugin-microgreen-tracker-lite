@@ -46,6 +46,10 @@ status column to fall out of step with the milestone that actually happened.
 | Failed | the tray is marked failed — **Mark failed** on its row |
 | Active | anything else — **Mark growing** puts a finished tray back |
 
+The three row links are hidden while Microgreen Tracker Pro is active: Pro
+records a harvest with its yield and a failure with its reason, from its own
+tray screens. Both are stored as dates, which is how Pro reads them.
+
 Harvested beats failed: a tray that was cut is not also a failure, whichever
 order the two were recorded in.
 
@@ -119,7 +123,7 @@ lives, and nothing to migrate when you upgrade.
 | Mark a tray harvested or failed, and undo it | Yes | Yes |
 | Trays kept on uninstall | Yes | Yes |
 | **Expected harvest worked out from the variety** | Yes | — |
-| **Soak, weight on, darkness lifted, germination milestones** | Yes | — |
+| **Soak, weight on, germination, darkness lifted milestones** | Yes | — |
 | **Seven-state grow cycle instead of three** | Yes | — |
 | **Seed variety library** — days to harvest, soak, seed rate, bag price | Yes | — |
 | **Average yield, harvested and failed counts per variety** | Yes | — |

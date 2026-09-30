@@ -12,7 +12,7 @@ everything downstream.
 | Mark a tray harvested or failed, and undo it | yes | yes, inherited |
 | Trays kept on uninstall | yes | yes, inherited |
 | **Expected harvest worked out from the variety** | — | **yes** |
-| **Soak, weight on, darkness lifted, germination milestones** | — | **yes** |
+| **Soak, weight on, germination, darkness lifted milestones** | — | **yes** |
 | **Seven-state grow cycle instead of three** | — | **yes** |
 | **Seed variety library** (days to harvest, soak, seed rate, bag price) | — | **yes** |
 | **Average yield, harvested and failed counts per variety** | — | **yes** |

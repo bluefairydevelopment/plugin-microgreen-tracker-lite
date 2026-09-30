@@ -65,7 +65,7 @@ final class TrayListTableTest extends TestCase {
 	}
 
 	public function test_the_edit_link_opens_this_trays_form(): void {
-		$this->assertStringContainsString( 'page=bfmt-trays&amp;action=edit&amp;tray_id=7">Edit</a>', $this->cell( 'row_actions_col' ) );
+		$this->assertMatchesRegularExpression( '#<a href="[^"]*page=bfmt-trays&amp;action=edit&amp;tray_id=7" aria-label="[^"]*">Edit</a>#', $this->cell( 'row_actions_col' ) );
 	}
 
 	public function test_the_trash_link_asks_through_a_data_attribute_not_inline_script(): void {
@@ -79,8 +79,8 @@ final class TrayListTableTest extends TestCase {
 	public function test_a_growing_tray_offers_harvested_and_failed_each_with_its_own_nonce(): void {
 		$actions = $this->cell( 'row_actions_col' );
 
-		$this->assertStringContainsString( 'action=harvest&amp;tray_id=7&amp;_wpnonce=test-bfmt_harvest_tray_7" class="bfmt-harvest">Mark harvested</a>', $actions );
-		$this->assertStringContainsString( 'action=fail&amp;tray_id=7&amp;_wpnonce=test-bfmt_fail_tray_7" class="bfmt-fail">Mark failed</a>', $actions );
+		$this->assertMatchesRegularExpression( '#action=harvest&amp;tray_id=7&amp;_wpnonce=test-bfmt_harvest_tray_7" aria-label="[^"]*" class="bfmt-harvest">Mark harvested</a>#', $actions );
+		$this->assertMatchesRegularExpression( '#action=fail&amp;tray_id=7&amp;_wpnonce=test-bfmt_fail_tray_7" aria-label="[^"]*" class="bfmt-fail">Mark failed</a>#', $actions );
 		$this->assertStringNotContainsString( 'Mark growing', $actions );
 	}
 
@@ -89,11 +89,11 @@ final class TrayListTableTest extends TestCase {
 		$harvested = $this->cell( 'row_actions_col' );
 
 		$GLOBALS['bfmt_meta'] = [];
-		update_post_meta( 7, '_mgtrack_failed', '1' );
+		update_post_meta( 7, '_mgtrack_failed', '2026-09-02' );
 		$failed = $this->cell( 'row_actions_col' );
 
 		foreach ( [ $harvested, $failed ] as $actions ) {
-			$this->assertStringContainsString( '_wpnonce=test-bfmt_reopen_tray_7" class="bfmt-reopen">Mark growing</a>', $actions );
+			$this->assertMatchesRegularExpression( '#_wpnonce=test-bfmt_reopen_tray_7" aria-label="[^"]*" class="bfmt-reopen">Mark growing</a>#', $actions );
 			$this->assertStringNotContainsString( 'Mark harvested', $actions );
 			$this->assertStringNotContainsString( 'Mark failed', $actions );
 		}
@@ -118,7 +118,9 @@ final class TrayListTableTest extends TestCase {
 		$this->assertSame( 'OR', $args['meta_query']['relation'] );
 		$this->assertSame( [ 'key' => '_mgtrack_seeding_date', 'compare' => 'EXISTS' ], $args['meta_query']['seeded'] );
 		$this->assertSame( [ 'key' => '_mgtrack_seeding_date', 'compare' => 'NOT EXISTS' ], $args['meta_query']['unseeded'] );
-		$this->assertSame( [ 'seeded' => 'DESC', 'ID' => 'DESC' ], $args['orderby'] );
+		// Ordered by the NOT EXISTS clause, whose join is keyed to the seeded
+		// date — the EXISTS clause's join is not, under an OR.
+		$this->assertSame( [ 'unseeded' => 'DESC', 'ID' => 'DESC' ], $args['orderby'] );
 	}
 
 	public function test_a_page_is_one_query_of_twenty_five(): void {
@@ -152,7 +154,7 @@ final class TrayListTableTest extends TestCase {
 
 		( new BFMT_Tray_List_Table() )->prepare_items();
 
-		$this->assertSame( [ 'seeded' => 'DESC', 'ID' => 'DESC' ], $GLOBALS['bfmt_query_args']['orderby'] );
+		$this->assertSame( [ 'unseeded' => 'DESC', 'ID' => 'DESC' ], $GLOBALS['bfmt_query_args']['orderby'] );
 	}
 
 	public function test_the_empty_state(): void {
@@ -160,5 +162,35 @@ final class TrayListTableTest extends TestCase {
 		( new BFMT_Tray_List_Table() )->no_items();
 
 		$this->assertSame( 'No trays yet. Add your first one to start the log.', ob_get_clean() );
+	}
+
+	/**
+	 * Every link names its tray for a screen reader, because every row repeats
+	 * the same link words.
+	 */
+	public function test_every_row_link_names_its_tray(): void {
+		$GLOBALS['bfmt_terms'][7] = [ (object) [ 'name' => 'Sunflower', 'term_id' => 1 ] ];
+		update_post_meta( 7, '_mgtrack_seeding_date', '2026-09-24' );
+
+		$actions = $this->cell( 'row_actions_col' );
+
+		foreach ( [ 'Edit', 'Mark harvested', 'Mark failed', 'Trash' ] as $label ) {
+			$this->assertStringContainsString( 'aria-label="' . $label . ': Sunflower, seeded 2026-09-24"', $actions, $label );
+		}
+		$this->assertSame( 4, substr_count( $actions, 'aria-label=' ) );
+	}
+
+	/**
+	 * A hostile translation comes out escaped in the label, the link text and
+	 * the confirm attribute.
+	 */
+	public function test_translated_link_text_is_escaped(): void {
+		$GLOBALS['bfmt_filters']['gettext'] = static fn( string $t ): string => str_replace( 'Mark', '<b>"Mark', $t );
+
+		$actions = $this->cell( 'row_actions_col' );
+
+		$this->assertStringNotContainsString( '<b>', $actions );
+		$this->assertStringContainsString( '&lt;b&gt;&quot;Mark harvested</a>', $actions );
+		$this->assertStringContainsString( 'aria-label="&lt;b&gt;&quot;Mark harvested:', $actions );
 	}
 }

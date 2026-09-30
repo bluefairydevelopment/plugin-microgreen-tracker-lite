@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 final class StatusBadgeTest extends TestCase {
 
 	protected function setUp(): void {
-		$GLOBALS['bfmt_filters'] = [];
+		bfmt_test_reset();
 	}
 
 	public function test_a_badge_carries_its_status_class_and_label(): void {
@@ -39,6 +39,7 @@ final class StatusBadgeTest extends TestCase {
 	public function test_a_status_key_is_reduced_to_a_safe_class(): void {
 		$this->assertSame( 'bfmt-badge--darkness_lifted', BFMT_Status::badge_class( 'Darkness_Lifted' ) );
 		$this->assertSame( 'bfmt-badge--xonclickalert1', BFMT_Status::badge_class( 'x" onclick="alert(1)' ) );
+		$this->assertSame( 'bfmt-badge--no-such', BFMT_Status::badge_class( 'No-Such' ), 'hyphens are kept' );
 	}
 
 	public function test_the_label_is_escaped_in_the_badge(): void {
@@ -109,8 +110,15 @@ final class StatusBadgeTest extends TestCase {
 			'#000;color:#fff',
 			'#000;background:#fff;}',
 			'url(x);background:#fff',
+			'x#000;background:#fff',
+			'red #000;background:#fff',
 		] as $bad ) {
 			$this->assertNull( BFMT_Status::parse_colour( $bad ), var_export( $bad, true ) );
 		}
+	}
+
+	public function test_the_built_in_colours_and_labels(): void {
+		$this->assertSame( [ 'active', 'harvested', 'failed' ], array_keys( BFMT_Status::colours() ) );
+		$this->assertSame( [ 'active' => 'Active', 'harvested' => 'Harvested', 'failed' => 'Failed' ], BFMT_Status::labels() );
 	}
 }

@@ -14,10 +14,9 @@ class BFMT_Plugin {
 	/**
 	 * Boot.
 	 *
-	 * bfmt_loaded fires BEFORE any of this plugin's own subsystems register.
-	 * The Pro add-on hooks it to declare its tray fields, its feature switches
-	 * and its status model, and all three have to be in place before the
-	 * registry, the settings screen or the list table read them.
+	 * bfmt_loaded fires BEFORE this plugin's admin screen registers. The Pro
+	 * add-on hooks it to register its tray fields and to answer the status
+	 * filters, and both have to be in place before the list table reads them.
 	 */
 	public static function boot(): void {
 		BFMT_Tray::init();

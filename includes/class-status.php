@@ -55,6 +55,60 @@ class BFMT_Status {
 	}
 
 	/**
+	 * Record that a tray was cut.
+	 *
+	 * Writes the same milestone Pro records, so a tray harvested here reads as
+	 * harvested there and the other way round. A harvest clears a failure:
+	 * harvested beats failed in get() anyway, and leaving the flag behind would
+	 * resurface it if the harvest were later undone.
+	 */
+	public static function mark_harvested( int $tray_id, string $date ): bool {
+		if ( ! BFMT_Tray::is_tray( $tray_id ) || ! BFMT_Tray::is_date( $date ) ) {
+			return false;
+		}
+
+		delete_post_meta( $tray_id, self::FAILED_KEY );
+
+		return false !== update_post_meta( $tray_id, self::HARVEST_KEY, $date );
+	}
+
+	/**
+	 * Record that a tray failed.
+	 *
+	 * Refused on a harvested tray: it was cut, and a failure recorded afterwards
+	 * would be hidden by the harvest anyway. Undo the harvest first.
+	 */
+	public static function mark_failed( int $tray_id ): bool {
+		if ( ! BFMT_Tray::is_tray( $tray_id ) || get_post_meta( $tray_id, self::HARVEST_KEY, true ) ) {
+			return false;
+		}
+
+		return false !== update_post_meta( $tray_id, self::FAILED_KEY, '1' );
+	}
+
+	/**
+	 * Put a harvested or failed tray back to growing — the undo for both.
+	 */
+	public static function reopen( int $tray_id ): bool {
+		if ( ! BFMT_Tray::is_tray( $tray_id ) ) {
+			return false;
+		}
+
+		delete_post_meta( $tray_id, self::HARVEST_KEY );
+		delete_post_meta( $tray_id, self::FAILED_KEY );
+
+		return true;
+	}
+
+	/**
+	 * Whether a tray has reached either end of its cycle.
+	 */
+	public static function is_finished( int $tray_id ): bool {
+		return (bool) get_post_meta( $tray_id, self::HARVEST_KEY, true )
+			|| (bool) get_post_meta( $tray_id, self::FAILED_KEY, true );
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	public static function labels(): array {

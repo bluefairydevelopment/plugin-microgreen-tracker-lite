@@ -52,11 +52,12 @@ class BFMT_Pro_Upsell {
 		$features = [
 			__( 'Expected harvest worked out for you, from each variety\'s days to harvest', 'bluefairy-microgreen-tracker' ),
 			__( 'The full grow cycle: soaking, weight on, darkness lifted, germination, harvest', 'bluefairy-microgreen-tracker' ),
-			__( 'Yield and germination rates per variety, and cost per tray', 'bluefairy-microgreen-tracker' ),
+			__( 'Average yield, harvested and failed counts per variety, and cost per tray', 'bluefairy-microgreen-tracker' ),
 			__( 'A rack and location grid, so you know what is where', 'bluefairy-microgreen-tracker' ),
 			__( 'Harvest planning that works backwards from the date you need the crop', 'bluefairy-microgreen-tracker' ),
 			__( 'A task calendar, expense tracking and reports', 'bluefairy-microgreen-tracker' ),
-			__( 'A worker role and front-end forms, so staff log trays without seeing wp-admin', 'bluefairy-microgreen-tracker' ),
+			__( 'A Farm Worker role and front-end forms, so staff can log trays from a phone without needing wp-admin', 'bluefairy-microgreen-tracker' ),
+			__( 'A daily digest email', 'bluefairy-microgreen-tracker' ),
 		];
 
 		echo '<hr><h2>' . esc_html__( 'Microgreen Tracker Pro', 'bluefairy-microgreen-tracker' ) . '</h2>';

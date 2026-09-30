@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.1.1] — 2026-09-30
+
+### Added
+- **Mark harvested**, **Mark failed** and **Mark growing** row actions. They
+  write the same milestones Pro records (`_mgtrack_harvest_date`,
+  `_mgtrack_failed`), each behind a nonce keyed to the action and the tray.
+  Until now nothing in the free plugin could finish a tray.
+
+### Fixed
+- Fatal error on PHP 8.1: `BFMT_Tray::update()` and `validate()` declared a
+  `true` return type, which needs PHP 8.2. They now declare `bool|WP_Error`.
+- The bulk-action menu below the list posts as `action2`; only `action` was
+  read, so "Move to Trash" from the bottom menu did nothing.
+- The list's default sort inner-joined `_mgtrack_seeding_date`, dropping any
+  tray without one (a Pro tray started with a soak). It now sorts without
+  requiring the key.
+- The Pro panel claimed a harvest date "from how much seed you sowed" and
+  "germination rates"; Pro uses each variety's days to harvest and reports
+  yield, harvested and failed counts and cost per tray. It now lists the daily
+  digest too, and names the Farm Worker role.
+- The edit form promised Pro would fill a blank expected harvest date; Pro only
+  does that on add.
+- A second `bulk-trays` nonce field was printed alongside WP_List_Table's own.
+
+### Changed
+- Status badge colours, the Pro panel's list styling and the trash prompt load
+  as an enqueued stylesheet and script on the Microgreens screen only, instead
+  of style and onclick attributes in the markup. Colours an add-on supplies
+  through `bfmt_status_colours` must be two hex colours; anything else falls
+  back to the neutral badge.
+- Translations are loaded by WordPress itself; the manual
+  `load_plugin_textdomain()` call is gone.
+- The 1.0.0 importer passes its table name through `$wpdb->prepare()` as `%i`,
+  and escapes it for `SHOW TABLES LIKE`.
+- `LICENSE` is the full, unmodified GPLv2 text.
+- The WordPress.org banners, icons and listing screenshots moved out of the
+  zip to `wp-org-assets/`. `FEATURES.md` moved to `docs/`.
+
 ## [1.1.0] — 2026-08-31
 
 Rebuilt as the base plugin for Microgreen Tracker Pro. The two plugins stored

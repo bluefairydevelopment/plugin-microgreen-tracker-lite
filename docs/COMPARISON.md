@@ -9,12 +9,13 @@ everything downstream.
 | Record a tray: variety, size, seeded date | yes | yes, inherited |
 | Expected harvest date you type | yes | yes, inherited |
 | Tray list with status, sortable, paged | yes | yes, inherited |
+| Mark a tray harvested or failed, and undo it | yes | yes, inherited |
 | Trays kept on uninstall | yes | yes, inherited |
 | **Expected harvest worked out from the variety** | — | **yes** |
 | **Soak, weight on, darkness lifted, germination milestones** | — | **yes** |
 | **Seven-state grow cycle instead of three** | — | **yes** |
 | **Seed variety library** (days to harvest, soak, seed rate, bag price) | — | **yes** |
-| **Yield and germination rates per variety** | — | **yes** |
+| **Average yield, harvested and failed counts per variety** | — | **yes** |
 | **Cost per tray, and expense tracking** | — | **yes** |
 | **Rack and location grid** | — | **yes** |
 | **Harvest planning, backwards from a delivery date** | — | **yes** |

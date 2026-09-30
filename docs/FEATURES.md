@@ -16,8 +16,9 @@ you have already logged.
 | Seeded | `_mgtrack_seeding_date` |
 | Expected harvest | `_mgtrack_expected_harvest_date` |
 
-The variety is a taxonomy term rather than a text field, so the names build up
-as you use them and a typo does not become a second variety.
+The variety is a taxonomy term rather than a text field, so a name is stored
+once and reused: type the same name again (capitals don't matter) and the tray
+joins that variety. A different spelling is a different variety.
 
 **Check your trays from the command line:** `wp post list --post_type=mgtrack_tray`
 
@@ -30,9 +31,9 @@ The check is a real calendar check, not a pattern match. `2026-02-30` has
 exactly the right shape and is not a day, so it is refused rather than stored.
 You are never told a tray was saved when it was not.
 
-`03/14/2026` is refused rather than guessed at. Reading it as the 3rd of
-February would silently record the wrong day for anyone whose locale writes
-dates the other way round.
+`03/04/2026` is refused rather than guessed at. Reading it as the 3rd of April
+would silently record the wrong day for anyone whose locale writes it as the
+4th of March.
 
 ## Status
 
@@ -41,9 +42,9 @@ status column to fall out of step with the milestone that actually happened.
 
 | State | When |
 |---|---|
-| Harvested | a harvest date is recorded |
-| Failed | the tray is marked failed |
-| Active | anything else |
+| Harvested | a harvest date is recorded — **Mark harvested** on the tray's row records today |
+| Failed | the tray is marked failed — **Mark failed** on its row |
+| Active | anything else — **Mark growing** puts a finished tray back |
 
 Harvested beats failed: a tray that was cut is not also a failure, whichever
 order the two were recorded in.
@@ -67,10 +68,11 @@ A tray goes to the trash. Nothing in this plugin destroys one outright, and
 uninstalling removes only `bfmt_features` and `bfmt_legacy_import` — never a
 grower's records.
 
-## Coming from 1.0.0
+## Coming from Microgreen Tracker Lite 1.0.0
 
-Version 1.0.0 kept grows in its own `wp_bfmtl_grows` table, which Pro could not
-read. Activating 1.1.0 imports those rows into the shared record:
+Lite 1.0.0 kept grows in its own `wp_bfmtl_grows` table, which Pro could not
+read. **Activate this plugin before you delete Lite** — deleting Lite drops that
+table. Activation imports its rows into the shared record:
 
 - once, tracked per row, so activating twice does not duplicate anything;
 - statuses become the milestone that produced them, since status is derived here;
@@ -98,7 +100,8 @@ rows were brought across, skipped and failed.
   first thing Pro adds.
 - No email, no cron, no scheduled work.
 - No database tables of its own.
-- Two options, both removed on uninstall.
+- No settings. Uninstalling removes the plugin's two options (the import
+  record, and the switches an add-on may store) and keeps every tray.
 
 ---
 
@@ -113,12 +116,13 @@ lives, and nothing to migrate when you upgrade.
 | Record a tray: variety, size, seeded date | Yes | Yes |
 | Expected harvest date you type | Yes | Yes |
 | Tray list with status, sortable, paged | Yes | Yes |
+| Mark a tray harvested or failed, and undo it | Yes | Yes |
 | Trays kept on uninstall | Yes | Yes |
 | **Expected harvest worked out from the variety** | Yes | — |
 | **Soak, weight on, darkness lifted, germination milestones** | Yes | — |
 | **Seven-state grow cycle instead of three** | Yes | — |
 | **Seed variety library** — days to harvest, soak, seed rate, bag price | Yes | — |
-| **Yield and germination rates per variety** | Yes | — |
+| **Average yield, harvested and failed counts per variety** | Yes | — |
 | **Cost per tray, and expense tracking** | Yes | — |
 | **Rack and location grid** | Yes | — |
 | **Harvest planning, backwards from a delivery date** | Yes | — |
@@ -146,13 +150,14 @@ and which are overdue, instead of walking the racks to find out.
 
 **You cannot tell which varieties pay.** Without seed weight, yield weight and
 cost per tray, every crop looks equally worthwhile. Pro records what went in and
-what came out, and reports yield, germination rate and cost per gram by variety.
+what came out, and reports average yield, harvested and failed counts and
+average cost per tray by variety.
 That is the number that decides what you sow next season.
 
 **Nobody else can log a tray.** This plugin is a wp-admin screen, so anyone who
 touches it needs a WordPress account with editing rights. Pro adds a Farm Worker
 role and five front-end shortcodes, so staff log trays and milestones from a
-phone in the grow room without ever seeing wp-admin.
+phone in the grow room without needing wp-admin.
 
 **You are remembering where everything is.** Pro's rack and location grid tracks
 occupancy across shelves and slots, blocks a slot that is already full, and

@@ -10,7 +10,7 @@ is an add-on that extends it and holds no copy of its work.
 bluefairy-microgreen-tracker.php   constants, requires, bfmt_plugin() marker
 includes/class-tray.php            the tray record: post type, taxonomy, fields, CRUD
 includes/class-status.php          the derived status, and the filter Pro replaces it at
-includes/class-feature-registry.php the switches Pro adds its own to
+includes/class-feature-registry.php an extension point for add-on switches (unused by Pro 1.4.0)
 includes/class-migrator.php        1.0.0's table, imported once and left in place
 admin/                             the list, the form, the Pro panel
 assets/                            the Microgreens screen's stylesheet and script (enqueued there only)

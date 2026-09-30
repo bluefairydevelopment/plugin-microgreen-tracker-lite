@@ -4,9 +4,9 @@
  *
  * WordPress.org allows a free plugin to mention its paid version; what it does
  * not allow is a claim the paid version cannot keep. 1.1.0's panel said Pro
- * worked out the harvest date "from how much seed you sowed". Pro actually uses
- * each variety's days-to-harvest range, and the readme said so — so the two
- * disagreed, and the one on screen was wrong.
+ * worked out the harvest date "from how much seed you sowed" and offered
+ * "germination rates". Pro uses each variety's days-to-harvest range, and its
+ * reports show yield, harvested and failed counts and cost per tray.
  *
  * @package BlueFairy\MicrogreenTracker
  */
@@ -19,10 +19,9 @@ use PHPUnit\Framework\TestCase;
 
 final class ProUpsellTest extends TestCase {
 
-	private static function pid_file(): string {
-		return sys_get_temp_dir() . '/bfmt-upsell-test-parent.pid';
+	protected function setUp(): void {
+		bfmt_test_reset();
 	}
-
 
 	/**
 	 * Only the in-process tests call this, so the pid it leaves behind is the
@@ -30,12 +29,22 @@ final class ProUpsellTest extends TestCase {
 	 * those too.
 	 */
 	private function panel(): string {
-		file_put_contents( self::pid_file(), (string) getmypid() );
+		file_put_contents( sys_get_temp_dir() . '/bfmt-upsell-test-parent.pid', (string) getmypid() );
 
 		ob_start();
 		BFMT_Pro_Upsell::render_panel();
 
 		return (string) ob_get_clean();
+	}
+
+	public function test_init_adds_the_link_to_this_plugins_row_only(): void {
+		BFMT_Pro_Upsell::init();
+
+		$this->assertSame(
+			[ [ 'plugin_action_links_' . BFMT_BASENAME, [ BFMT_Pro_Upsell::class, 'action_links' ], 10 ] ],
+			bfmt_test_calls( 'add_filter' )
+		);
+		$this->assertSame( 'plugin_action_links_bluefairy-microgreen-tracker/bluefairy-microgreen-tracker.php', 'plugin_action_links_' . BFMT_BASENAME );
 	}
 
 	public function test_the_panel_describes_the_harvest_calculation_pro_actually_does(): void {
@@ -45,6 +54,15 @@ final class ProUpsellTest extends TestCase {
 		$this->assertStringNotContainsString( 'seed you sowed', $panel );
 	}
 
+	public function test_the_panel_names_only_reports_pro_has(): void {
+		$panel = $this->panel();
+
+		$this->assertStringContainsString( 'Average yield, harvested and failed counts per variety, and cost per tray', $panel );
+		$this->assertStringNotContainsString( 'germination rate', $panel );
+		$this->assertStringContainsString( 'A daily digest email', $panel );
+		$this->assertStringContainsString( 'A Farm Worker role', $panel );
+	}
+
 	public function test_the_panel_list_is_styled_by_class_not_attribute(): void {
 		$panel = $this->panel();
 
@@ -52,10 +70,10 @@ final class ProUpsellTest extends TestCase {
 		$this->assertStringNotContainsString( 'style=', $panel );
 	}
 
-	public function test_the_panel_lists_seven_features_and_one_button(): void {
+	public function test_the_panel_lists_eight_features_and_one_button(): void {
 		$panel = $this->panel();
 
-		$this->assertSame( 7, substr_count( $panel, '<li>' ) );
+		$this->assertSame( 8, substr_count( $panel, '<li>' ) );
 		$this->assertSame( 1, substr_count( $panel, 'button-primary' ) );
 		$this->assertStringContainsString( 'href="https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/"', $panel );
 	}
@@ -66,6 +84,11 @@ final class ProUpsellTest extends TestCase {
 		$this->assertCount( 2, $links );
 		$this->assertStringContainsString( 'Get Microgreen Tracker Pro', end( $links ) );
 		$this->assertStringContainsString( 'rel="noopener noreferrer"', end( $links ) );
+		$this->assertStringContainsString( 'target="_blank"', end( $links ) );
+	}
+
+	public function test_pro_is_not_active_without_its_marker(): void {
+		$this->assertFalse( BFMT_Pro_Upsell::pro_is_active() );
 	}
 
 	/**
@@ -76,9 +99,9 @@ final class ProUpsellTest extends TestCase {
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
 	public function test_nothing_is_shown_once_pro_is_active(): void {
-		// The eval below declares bfmtp_plugin() for good. Proof this is a child
-		// process, so the declaration cannot leak into the rest of the suite.
-		$this->assertNotSame( trim( (string) file_get_contents( self::pid_file() ) ), (string) getmypid() );
+		// Proof this is a child process, so the declaration below cannot leak
+		// into the rest of the suite.
+		$this->assertNotSame( trim( (string) file_get_contents( sys_get_temp_dir() . '/bfmt-upsell-test-parent.pid' ) ), (string) getmypid() );
 
 		require dirname( __DIR__ ) . '/bootstrap.php';
 
@@ -89,10 +112,14 @@ final class ProUpsellTest extends TestCase {
 
 		eval( 'function bfmtp_plugin() { return "1.4.0"; }' );
 
+		$this->assertTrue( BFMT_Pro_Upsell::pro_is_active() );
+
 		ob_start();
 		BFMT_Pro_Upsell::render_panel();
 		$this->assertSame( '', ob_get_clean() );
 
 		$this->assertSame( [ 'x' ], BFMT_Pro_Upsell::action_links( [ 'x' ] ) );
+		$this->assertStringContainsString( 'Left blank, Pro fills it in', BFMT_Tray_Admin::harvest_help( false ) );
+		$this->assertSame( 'Optional.', BFMT_Tray_Admin::harvest_help( true ) );
 	}
 }

@@ -12,7 +12,21 @@ defined( 'ABSPATH' ) || exit;
 class BFMT_Tray_Admin {
 
 	public const PAGE_SLUG  = 'bfmt-trays';
+
+	/**
+	 * Who may use the screen, and every action on it.
+	 *
+	 * The tray log is the farm's shared record, not per-author content: anyone
+	 * trusted to log a tray may correct, finish or trash any tray, which is how
+	 * a grow room works. So every action checks this capability, a nonce keyed
+	 * to the action (and to the tray, for single-tray actions), and that the id
+	 * really is a tray. Trays are never public — the post type is registered
+	 * with public => false — and trashing is recoverable.
+	 */
 	public const CAPABILITY = 'edit_posts';
+
+	/** Single-tray actions that change status, and the nonce each carries. */
+	public const STATUS_ACTIONS = [ 'harvest', 'fail', 'reopen' ];
 
 	public static function init(): void {
 		add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
@@ -67,16 +81,37 @@ class BFMT_Tray_Admin {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- see above.
-		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+		$action = self::requested_action();
 
-		if ( 'trash' === $action ) {
+		if ( in_array( $action, self::STATUS_ACTIONS, true ) ) {
+			self::do_status( $action );
+		} elseif ( 'trash' === $action ) {
 			self::do_trash();
 		} elseif ( 'bulk_trash' === $action ) {
 			self::do_bulk_trash();
 		} elseif ( 'save' === $action ) {
 			self::do_save();
 		}
+	}
+
+	/**
+	 * The action this request asks for.
+	 *
+	 * The list table has a bulk-action menu above AND below the table. The top
+	 * one posts as `action`, the bottom one as `action2`, and whichever was not
+	 * used arrives as "-1". Reading only `action` made the bottom menu a no-op.
+	 */
+	public static function requested_action(): string {
+		foreach ( [ 'action', 'action2' ] as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- choosing the handler; each handler verifies its own nonce.
+			$value = isset( $_REQUEST[ $field ] ) ? sanitize_key( wp_unslash( $_REQUEST[ $field ] ) ) : '';
+
+			if ( '' !== $value && '-1' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
 	}
 
 	private static function guard(): void {
@@ -97,6 +132,35 @@ class BFMT_Tray_Admin {
 			: [ 'error', __( 'That tray could not be found.', 'bluefairy-microgreen-tracker' ) ];
 
 		self::redirect_with_notice( $notice );
+	}
+
+	/**
+	 * Mark harvested, mark failed, or put back to growing.
+	 */
+	private static function do_status( string $action ): void {
+		self::guard();
+
+		$tray_id = isset( $_GET['tray_id'] ) ? absint( wp_unslash( $_GET['tray_id'] ) ) : 0;
+
+		check_admin_referer( 'bfmt_' . $action . '_tray_' . $tray_id );
+
+		$done = match ( $action ) {
+			'harvest' => BFMT_Status::mark_harvested( $tray_id, current_time( 'Y-m-d' ) ),
+			'fail'    => BFMT_Status::mark_failed( $tray_id ),
+			default   => BFMT_Status::reopen( $tray_id ),
+		};
+
+		$messages = [
+			'harvest' => __( 'Tray marked harvested.', 'bluefairy-microgreen-tracker' ),
+			'fail'    => __( 'Tray marked failed.', 'bluefairy-microgreen-tracker' ),
+			'reopen'  => __( 'Tray is growing again.', 'bluefairy-microgreen-tracker' ),
+		];
+
+		self::redirect_with_notice(
+			$done
+				? [ 'updated', $messages[ $action ] ]
+				: [ 'error', __( 'That tray could not be changed.', 'bluefairy-microgreen-tracker' ) ]
+		);
 	}
 
 	private static function do_bulk_trash(): void {
@@ -219,8 +283,9 @@ class BFMT_Tray_Admin {
 			esc_html__( 'Add tray', 'bluefairy-microgreen-tracker' )
 		);
 
+		// No wp_nonce_field() here: WP_List_Table prints the bulk-trays nonce
+		// itself, and a second copy is a duplicate element id.
 		echo '<form method="post">';
-		wp_nonce_field( 'bulk-trays' );
 		printf( '<input type="hidden" name="page" value="%s">', esc_attr( self::PAGE_SLUG ) );
 		$table->display();
 		echo '</form>';
@@ -259,9 +324,7 @@ class BFMT_Tray_Admin {
 			__( 'Expected harvest', 'bluefairy-microgreen-tracker' ),
 			$expected,
 			'date',
-			BFMT_Pro_Upsell::pro_is_active()
-				? __( 'Left blank, Pro works this out from the variety.', 'bluefairy-microgreen-tracker' )
-				: __( 'Optional. Microgreen Tracker Pro works this out for you from the variety.', 'bluefairy-microgreen-tracker' )
+			self::harvest_help( $editing )
 		);
 		echo '</tbody></table>';
 
@@ -272,6 +335,23 @@ class BFMT_Tray_Admin {
 			: __( 'Add tray', 'bluefairy-microgreen-tracker' ) );
 
 		echo '</form>';
+	}
+
+	/**
+	 * The help line under Expected harvest.
+	 *
+	 * Pro fills the date in when a tray is ADDED with it blank, from the
+	 * variety's days-to-harvest range, and only if the variety has one. It does
+	 * nothing on edit, so the edit form does not promise it.
+	 */
+	public static function harvest_help( bool $editing ): string {
+		if ( $editing ) {
+			return __( 'Optional.', 'bluefairy-microgreen-tracker' );
+		}
+
+		return BFMT_Pro_Upsell::pro_is_active()
+			? __( 'Optional. Left blank, Pro fills it in from the variety\'s days to harvest, if the variety has them.', 'bluefairy-microgreen-tracker' )
+			: __( 'Optional. Microgreen Tracker Pro can fill it in for you from each variety\'s days to harvest.', 'bluefairy-microgreen-tracker' );
 	}
 
 	private static function field( string $name, string $label, string $value, string $type, string $help ): void {

@@ -16,8 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class TrayAdminAssetsTest extends TestCase {
 
 	protected function setUp(): void {
-		$GLOBALS['bfmt_calls']   = [];
-		$GLOBALS['bfmt_filters'] = [];
+		bfmt_test_reset();
 	}
 
 	public function test_the_screen_enqueues_its_stylesheet_and_script(): void {

@@ -4,7 +4,7 @@ Tags: microgreens, farm, growing, tracker, agriculture
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,14 +16,14 @@ If you grow microgreens you already keep this record somewhere — a notebook, a
 
 = What you record =
 
-* **Variety** — pea shoots, sunflower, radish, whatever you grow. Varieties build up as you use them, so the second tray of sunflower picks the name you already typed.
+* **Variety** — pea shoots, sunflower, radish, whatever you grow. Type the same name again (capitals don't matter) and the tray joins that variety.
 * **Tray size** — 10×20, half tray, or your own words for it.
 * **Seeded** — the day it went in.
 * **Expected harvest** — the day you think it comes out. Optional.
 
 = What you see =
 
-Every tray in one list, newest first, with a coloured badge showing whether it is still going, has been cut, or failed. Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
+Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
 
 = What it does not do =
 
@@ -37,13 +37,13 @@ Trays are ordinary WordPress records, so they are in your database backup along 
 
 The paid add-on installs alongside this plugin and keeps everything you have logged. It adds:
 
-* Expected harvest worked out for you, from the variety and how long it takes
+* Expected harvest worked out for you, from each variety's days to harvest
 * The full grow cycle — soaking, weight on, darkness lifted, germination, harvest
-* Yield and germination rates per variety, and cost per tray
+* Average yield, harvested and failed counts per variety, and cost per tray
 * A rack and location grid, so you know what is where
 * Harvest planning that works backwards from the date you need the crop
 * A task calendar, expense tracking and reports
-* A Farm Worker role and front-end forms, so staff log trays without seeing wp-admin
+* A Farm Worker role and front-end forms, so staff can log trays from a phone without needing wp-admin
 * A daily digest email
 
 https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/
@@ -64,9 +64,9 @@ No. Deactivating changes nothing, and uninstalling removes only this plugin's ow
 
 No, and the list is built to mean it: each page is a separate database query rather than the whole table loaded and cut down afterwards.
 
-= I used version 1.0.0, which kept its own table. =
+= I used Microgreen Tracker Lite 1.0.0, which kept its own table. =
 
-Activating 1.1.0 brings those rows across into the shared record automatically. It runs once, it does not duplicate anything if you activate twice, and it leaves the old table alone so nothing is lost either way.
+Activate this plugin **before** you delete Lite. Activation brings Lite's rows across into the shared record once — activating twice does not duplicate anything — and leaves Lite's table in place. Deleting Lite first removes that table, and with it the rows this plugin would have imported.
 
 = Can my staff log trays without a WordPress login? =
 
@@ -82,6 +82,17 @@ No.
 2. Adding a tray: variety, size, seeded date, expected harvest.
 
 == Changelog ==
+
+= 1.1.1 =
+* Added: mark a tray harvested or failed from its row in the list, and put it back to growing if you marked the wrong one. Until now only trays imported from Lite, or recorded with Pro, could show as harvested or failed.
+* Fixed: the plugin stopped with a fatal error on PHP 8.1, the version it says it supports.
+* Fixed: "Move to Trash" chosen from the bulk-action menu below the list did nothing. Both menus work.
+* Fixed: a tray with no seeded date — one started with a soak in Pro — was missing from the list.
+* Fixed: the Microgreen Tracker Pro panel described features Pro does not have: the harvest date "from how much seed you sowed" (it uses each variety's days to harvest) and "germination rates" (Pro reports yield, harvested and failed counts, and cost per tray). The panel now also lists Pro's daily digest email.
+* Fixed: the edit form promised Pro would fill in a blank expected harvest date. Pro only does that when a tray is added.
+* Changed: the screen's styling and its "Move this tray to the trash?" prompt load as a stylesheet and a script on the Microgreens screen only, instead of being written into each row. Status colours an add-on supplies must be hex colours; any other value shows the neutral badge.
+* Changed: translations are loaded by WordPress itself.
+* Changed: the WordPress.org directory banners, icons and listing screenshots are no longer inside the plugin zip.
 
 = 1.1.0 =
 * Rebuilt as the base plugin for Microgreen Tracker Pro, which now extends it rather than keeping its own separate copy of your trays. Buying Pro used to show an empty tracker, because the two plugins stored the same thing in different places.

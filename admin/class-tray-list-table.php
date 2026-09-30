@@ -92,18 +92,53 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 	}
 
 	private function actions_for( int $tray_id ): string {
-		$page = admin_url( 'admin.php?page=' . BFMT_Tray_Admin::PAGE_SLUG );
+		$links = [
+			sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( add_query_arg( [ 'action' => 'edit', 'tray_id' => $tray_id ], self::page_url() ) ),
+				esc_html__( 'Edit', 'bluefairy-microgreen-tracker' )
+			),
+		];
 
-		return sprintf(
-			'<a href="%s">%s</a> | <a href="%s" data-bfmt-confirm="%s">%s</a>',
-			esc_url( add_query_arg( [ 'action' => 'edit', 'tray_id' => $tray_id ], $page ) ),
-			esc_html__( 'Edit', 'bluefairy-microgreen-tracker' ),
-			esc_url( wp_nonce_url(
-				add_query_arg( [ 'action' => 'trash', 'tray_id' => $tray_id ], $page ),
-				'bfmt_trash_tray_' . $tray_id
-			) ),
+		// A growing tray can be finished either way; a finished one can be put
+		// back, which is the undo for a mis-tap.
+		$status_actions = BFMT_Status::is_finished( $tray_id )
+			? [ 'reopen' => __( 'Mark growing', 'bluefairy-microgreen-tracker' ) ]
+			: [
+				'harvest' => __( 'Mark harvested', 'bluefairy-microgreen-tracker' ),
+				'fail'    => __( 'Mark failed', 'bluefairy-microgreen-tracker' ),
+			];
+
+		foreach ( $status_actions as $action => $label ) {
+			$links[] = sprintf(
+				'<a href="%s" class="bfmt-%s">%s</a>',
+				esc_url( self::action_url( $action, $tray_id ) ),
+				esc_attr( $action ),
+				esc_html( $label )
+			);
+		}
+
+		$links[] = sprintf(
+			'<a href="%s" data-bfmt-confirm="%s">%s</a>',
+			esc_url( self::action_url( 'trash', $tray_id ) ),
 			esc_attr__( 'Move this tray to the trash?', 'bluefairy-microgreen-tracker' ),
 			esc_html__( 'Trash', 'bluefairy-microgreen-tracker' )
+		);
+
+		return implode( ' | ', $links );
+	}
+
+	private static function page_url(): string {
+		return admin_url( 'admin.php?page=' . BFMT_Tray_Admin::PAGE_SLUG );
+	}
+
+	/**
+	 * A single-tray action link, carrying a nonce keyed to the action and the tray.
+	 */
+	public static function action_url( string $action, int $tray_id ): string {
+		return wp_nonce_url(
+			add_query_arg( [ 'action' => $action, 'tray_id' => $tray_id ], self::page_url() ),
+			'bfmt_' . $action . '_tray_' . $tray_id
 		);
 	}
 
@@ -136,9 +171,18 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 			$args['orderby'] = 'title';
 			$args['order']   = $order;
 		} else {
-			$args['meta_key'] = '_mgtrack_seeding_date';  // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- sorting by the seeded date is the point of the screen.
-			$args['orderby']  = 'meta_value';
-			$args['order']    = $order;
+			// Sort by the seeded date WITHOUT requiring one. A plain meta_key
+			// orderby inner-joins the meta table and silently drops every tray
+			// that has no seeded date — which is how a Pro tray started with a
+			// soak goes missing from "every tray in one list". The OR with NOT
+			// EXISTS keeps those rows; they sort as empty.
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- sorting by the seeded date is the point of the screen.
+			$args['meta_query'] = [
+				'relation' => 'OR',
+				'seeded'   => [ 'key' => '_mgtrack_seeding_date', 'compare' => 'EXISTS' ],
+				'unseeded' => [ 'key' => '_mgtrack_seeding_date', 'compare' => 'NOT EXISTS' ],
+			];
+			$args['orderby'] = [ 'seeded' => $order, 'ID' => $order ];
 		}
 
 		$query = new WP_Query( $args );

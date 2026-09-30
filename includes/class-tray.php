@@ -8,8 +8,8 @@
  * know the storage layout drift apart at the first schema change.
  *
  * The post type, taxonomy and meta key names come from the paid plugin's 1.3.3
- * data model and MUST NOT change. bluedragonhollow.com has fifteen real trays
- * stored under exactly these names; renaming any of them orphans the lot.
+ * data model and MUST NOT change. Existing installs have trays stored under
+ * exactly these names; renaming any of them orphans the lot.
  * _mgtrack_seeding_date in particular is not "seeded_date" — the free plugin's
  * old custom table used that name and the real data does not.
  *
@@ -177,9 +177,10 @@ class BFMT_Tray {
 
 	/**
 	 * @param  array<string, mixed> $fields
-	 * @return true|WP_Error
+	 * @return bool|WP_Error true on success. Declared bool rather than true: the
+	 *                       `true` type needs PHP 8.2 and this plugin supports 8.1.
 	 */
-	public static function update( int $tray_id, array $fields ): true|WP_Error {
+	public static function update( int $tray_id, array $fields ): bool|WP_Error {
 		if ( ! self::is_tray( $tray_id ) ) {
 			return new WP_Error( 'bfmt_no_tray', __( 'That tray no longer exists.', 'bluefairy-microgreen-tracker' ) );
 		}
@@ -212,8 +213,8 @@ class BFMT_Tray {
 	/**
 	 * Move a tray to the trash.
 	 *
-	 * Trash, never force. A tray is a season of someone's records, and 1.3.3
-	 * handed a permanent delete to the worker role from a public form.
+	 * Trash, never force. A tray is a season of someone's records, and a
+	 * mis-tap should be recoverable.
 	 */
 	public static function trash( int $tray_id ): bool {
 		return self::is_tray( $tray_id ) && (bool) wp_trash_post( $tray_id );
@@ -232,9 +233,9 @@ class BFMT_Tray {
 
 	/**
 	 * @param  array<string, mixed> $fields
-	 * @return true|WP_Error
+	 * @return bool|WP_Error true when valid (see update() for why not `true`).
 	 */
-	private static function validate( array $fields, bool $creating ): true|WP_Error {
+	private static function validate( array $fields, bool $creating ): bool|WP_Error {
 		if ( $creating && '' === trim( (string) ( $fields['variety'] ?? '' ) ) ) {
 			return new WP_Error( 'bfmt_variety', __( 'A variety is required.', 'bluefairy-microgreen-tracker' ) );
 		}

@@ -12,9 +12,8 @@ use PHPUnit\Framework\TestCase;
 final class StatusTest extends TestCase {
 
 	protected function setUp(): void {
-		$GLOBALS['bfmt_meta']    = [];
+		bfmt_test_reset();
 		$GLOBALS['bfmt_types']   = [ 1 => 'mgtrack_tray' ];
-		$GLOBALS['bfmt_filters'] = [];
 	}
 
 	public function test_a_new_tray_is_active(): void {

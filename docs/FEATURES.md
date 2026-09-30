@@ -64,6 +64,11 @@ are decided here, once.
 
 ## The list
 
+The Microgreens menu in wp-admin. With Microgreen Tracker Pro active, the same
+screen is **All Trays** inside Pro's Microgreens menu, so there is one
+Microgreens menu, not two; its address, `admin.php?page=bfmt-trays`, does not
+change.
+
 Twenty-five trays to a page, sorted and paged **in the database**, so the screen
 stays fast whether you have logged thirty trays or three thousand.
 

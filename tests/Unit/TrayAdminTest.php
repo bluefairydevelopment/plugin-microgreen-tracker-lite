@@ -60,7 +60,7 @@ final class TrayAdminTest extends TestCase {
 		BFMT_Tray_Admin::init();
 
 		$this->assertSame( [
-			[ 'admin_menu', [ BFMT_Tray_Admin::class, 'register_menu' ], 10 ],
+			[ 'admin_menu', [ BFMT_Tray_Admin::class, 'register_menu' ], 20 ],
 			[ 'admin_init', [ BFMT_Tray_Admin::class, 'handle_actions' ], 10 ],
 			[ 'admin_enqueue_scripts', [ BFMT_Tray_Admin::class, 'enqueue_assets' ], 10 ],
 		], bfmt_test_calls( 'add_action' ) );
@@ -69,6 +69,8 @@ final class TrayAdminTest extends TestCase {
 	public function test_the_menu_is_top_level_and_gated_on_the_screen_capability(): void {
 		BFMT_Tray_Admin::register_menu();
 
+		$this->assertSame( [], bfmt_test_calls( 'add_submenu_page' ), 'no Pro, no nesting' );
+		$this->assertSame( 'toplevel_page_bfmt-trays', BFMT_Tray_Admin::hook_suffix() );
 		$menu = bfmt_test_calls( 'add_menu_page' )[0];
 		$this->assertSame( 'edit_posts', $menu[2] );
 		$this->assertSame( 'bfmt-trays', $menu[3] );

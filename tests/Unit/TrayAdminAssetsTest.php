@@ -17,6 +17,8 @@ final class TrayAdminAssetsTest extends TestCase {
 
 	protected function setUp(): void {
 		bfmt_test_reset();
+		BFMT_Tray_Admin::register_menu();   // the hook suffix is whatever WordPress returned
+		$GLOBALS['bfmt_calls'] = [];
 	}
 
 	public function test_the_screen_enqueues_its_stylesheet_and_script(): void {

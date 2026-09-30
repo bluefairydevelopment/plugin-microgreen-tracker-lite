@@ -28,8 +28,16 @@ class BFMT_Tray_Admin {
 	/** Single-tray actions that change status, and the nonce each carries. */
 	public const STATUS_ACTIONS = [ 'harvest', 'fail', 'reopen' ];
 
+	/** Microgreen Tracker Pro's top-level menu, which this screen joins when Pro is active. */
+	public const PRO_MENU_SLUG = 'mgtrack';
+
+	/** The hook suffix WordPress gave this screen, whichever menu it is in. */
+	private static string $hook_suffix = '';
+
 	public static function init(): void {
-		add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
+		// Priority 20: after Pro has registered its menu, so this screen can
+		// be placed in it.
+		add_action( 'admin_menu', [ __CLASS__, 'register_menu' ], 20 );
 		add_action( 'admin_init', [ __CLASS__, 'handle_actions' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
 	}
@@ -42,7 +50,7 @@ class BFMT_Tray_Admin {
 	 * built-in three.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'toplevel_page_' . self::PAGE_SLUG !== $hook_suffix ) {
+		if ( '' === self::$hook_suffix || self::$hook_suffix !== $hook_suffix ) {
 			return;
 		}
 
@@ -52,23 +60,48 @@ class BFMT_Tray_Admin {
 	}
 
 	/**
-	 * A top-level menu.
+	 * The Microgreens menu — or, with Pro active, a page in Pro's.
 	 *
-	 * A place to keep records, not a setting, so it is its own menu rather
-	 * than a page under Settings.
+	 * On its own this is a top-level menu: a place to keep records, not a
+	 * setting. With Microgreen Tracker Pro active there would otherwise be two
+	 * top-level "Microgreens" menus, so this screen becomes "All Trays" under
+	 * Pro's menu instead. Its address (admin.php?page=bfmt-trays) is the same
+	 * either way; only the hook suffix differs, so it is stored rather than
+	 * assumed.
 	 */
 	public static function register_menu(): void {
-		add_menu_page(
-			__( 'Microgreens', 'bluefairy-microgreen-tracker' ),
-			__( 'Microgreens', 'bluefairy-microgreen-tracker' ),
-			self::CAPABILITY,
-			self::PAGE_SLUG,
-			[ __CLASS__, 'render' ],
-			'dashicons-carrot',
-			26
-		);
+		if ( BFMT_Pro_Upsell::pro_is_active() ) {
+			$hook = add_submenu_page(
+				self::PRO_MENU_SLUG,
+				__( 'All Trays', 'bluefairy-microgreen-tracker' ),
+				__( 'All Trays', 'bluefairy-microgreen-tracker' ),
+				self::CAPABILITY,
+				self::PAGE_SLUG,
+				[ __CLASS__, 'render' ],
+				3
+			);
+		} else {
+			$hook = add_menu_page(
+				__( 'Microgreens', 'bluefairy-microgreen-tracker' ),
+				__( 'Microgreens', 'bluefairy-microgreen-tracker' ),
+				self::CAPABILITY,
+				self::PAGE_SLUG,
+				[ __CLASS__, 'render' ],
+				'dashicons-carrot',
+				26
+			);
+		}
+
+		self::$hook_suffix = is_string( $hook ) ? $hook : '';
 
 		do_action( 'bfmt_admin_menu', self::PAGE_SLUG, self::CAPABILITY );
+	}
+
+	/**
+	 * The hook suffix of this screen, or '' before the menu is registered.
+	 */
+	public static function hook_suffix(): string {
+		return self::$hook_suffix;
 	}
 
 	private static function page_url(): string {

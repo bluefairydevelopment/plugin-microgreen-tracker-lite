@@ -129,6 +129,22 @@ final class ProUpsellTest extends TestCase {
 		$GLOBALS['bfmt_caps']     = [ 'edit_posts' => true ];
 		$this->assertSame( [], BFMT_Tray_List_Table::status_actions( 9 ) );
 
+		// WPMAP-99: with Pro active the screen is "All Trays" under Pro's
+		// Microgreens menu, not a second top-level Microgreens menu, and its
+		// assets follow it to the new hook suffix.
+		$GLOBALS['bfmt_calls'] = [];
+		BFMT_Tray_Admin::register_menu();
+		$this->assertSame( [], bfmt_test_calls( 'add_menu_page' ) );
+		$sub = bfmt_test_calls( 'add_submenu_page' )[0];
+		$this->assertSame( [ 'mgtrack', 'All Trays', 'All Trays', 'edit_posts', 'bfmt-trays', [ BFMT_Tray_Admin::class, 'render' ], 3 ], $sub );
+		$this->assertSame( 'microgreens_page_bfmt-trays', BFMT_Tray_Admin::hook_suffix() );
+
+		$GLOBALS['bfmt_calls'] = [];
+		BFMT_Tray_Admin::enqueue_assets( 'toplevel_page_bfmt-trays' );
+		$this->assertSame( [], bfmt_test_calls( 'wp_enqueue_style' ), 'the old top-level hook no longer matches' );
+		BFMT_Tray_Admin::enqueue_assets( 'microgreens_page_bfmt-trays' );
+		$this->assertCount( 1, bfmt_test_calls( 'wp_enqueue_style' ) );
+
 		foreach ( [ 'harvest', 'fail', 'reopen' ] as $action ) {
 			$GLOBALS['bfmt_calls'] = [];
 			bfmt_test_request( [ 'page' => 'bfmt-trays', 'action' => $action, 'tray_id' => '9' ] );

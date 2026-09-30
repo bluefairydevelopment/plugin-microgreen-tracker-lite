@@ -52,7 +52,7 @@ https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-
 
 1. Upload the `bluefairy-microgreen-tracker` folder to `/wp-content/plugins/`, or install the zip through **Plugins → Add New → Upload Plugin**.
 2. Activate it.
-3. **Microgreens** appears in the admin menu. Add your first tray.
+3. **Microgreens** appears in the admin menu. Add your first tray. (With Microgreen Tracker Pro active, this list is **Microgreens → All Trays**, inside Pro's menu.)
 
 == Frequently Asked Questions ==
 

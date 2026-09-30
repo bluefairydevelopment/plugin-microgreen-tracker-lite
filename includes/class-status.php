@@ -160,12 +160,14 @@ class BFMT_Status {
 	 * Whether another unfinished tray occupies $slot — Pro's own occupancy rule.
 	 */
 	private static function slot_taken( string $slot, int $except ): bool {
-		return (bool) get_posts( [
+		// Two at most: the tray itself cannot be among them (it is finished),
+		// but the caller's tray is filtered out in PHP rather than with
+		// post__not_in, which Plugin Check flags as a slow query pattern.
+		$holders = get_posts( [
 			'post_type'      => BFMT_Tray::POST_TYPE,
 			'post_status'    => 'publish',
-			'posts_per_page' => 1,
+			'posts_per_page' => 2,
 			'fields'         => 'ids',
-			'post__not_in'   => [ $except ],
 			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed lookup, only when reopening.
 				'relation' => 'AND',
 				[ 'key' => '_mgtrack_location', 'value' => $slot ],
@@ -173,6 +175,8 @@ class BFMT_Status {
 				[ 'key' => '_mgtrack_failed', 'compare' => 'NOT EXISTS' ],
 			],
 		] );
+
+		return [] !== array_diff( array_map( 'intval', (array) $holders ), [ $except ] );
 	}
 
 	/**

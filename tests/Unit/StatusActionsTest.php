@@ -149,7 +149,7 @@ final class StatusActionsTest extends TestCase {
 		$this->assertSame( 'slot', BFMT_Status::reopen_blocker( 1 ) );
 
 		$args = bfmt_test_calls( 'get_posts' )[0][0];
-		$this->assertSame( [ 1 ], $args['post__not_in'] );
+		$this->assertArrayNotHasKey( 'post__not_in', $args );
 		$this->assertSame( 'publish', $args['post_status'] );
 		$this->assertSame( [ 'key' => '_mgtrack_location', 'value' => '1A3' ], $args['meta_query'][0] );
 		$this->assertSame( [ 'key' => '_mgtrack_harvest_date', 'compare' => 'NOT EXISTS' ], $args['meta_query'][1] );
@@ -164,7 +164,7 @@ final class StatusActionsTest extends TestCase {
 
 		$args = bfmt_test_calls( 'get_posts' )[0][0];
 		$this->assertSame( 'AND', $args['meta_query']['relation'] );
-		$this->assertSame( 1, $args['posts_per_page'] );
+		$this->assertSame( 2, $args['posts_per_page'] );
 		$this->assertSame( 'mgtrack_tray', $args['post_type'] );
 	}
 
@@ -173,5 +173,19 @@ final class StatusActionsTest extends TestCase {
 		$GLOBALS['bfmt_posts_result'] = [ 2 ];
 
 		$this->assertSame( 'pro', BFMT_Status::reopen_blocker( 1 ) );
+	}
+
+	/**
+	 * The query can return the tray itself (the stub cannot filter); it is
+	 * never counted as the occupant of its own slot.
+	 */
+	public function test_the_tray_itself_does_not_occupy_its_own_slot(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3' ];
+		$GLOBALS['bfmt_posts_result'] = [ 1 ];
+
+		$this->assertSame( '', BFMT_Status::reopen_blocker( 1 ) );
+
+		$GLOBALS['bfmt_posts_result'] = [ '1', '9' ];
+		$this->assertSame( 'slot', BFMT_Status::reopen_blocker( 1 ) );
 	}
 }

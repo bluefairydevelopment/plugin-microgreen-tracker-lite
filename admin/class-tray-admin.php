@@ -123,6 +123,7 @@ class BFMT_Tray_Admin {
 	private static function do_trash(): void {
 		self::guard();
 
+		// phpcs:ignore WordPress.Security.NonceVerification -- the nonce is keyed to this id; check_admin_referer() on the next line verifies it.
 		$tray_id = isset( $_GET['tray_id'] ) ? absint( wp_unslash( $_GET['tray_id'] ) ) : 0;
 
 		check_admin_referer( 'bfmt_trash_tray_' . $tray_id );
@@ -140,6 +141,7 @@ class BFMT_Tray_Admin {
 	private static function do_status( string $action ): void {
 		self::guard();
 
+		// phpcs:ignore WordPress.Security.NonceVerification -- the nonce is keyed to this id; check_admin_referer() on the next line verifies it.
 		$tray_id = isset( $_GET['tray_id'] ) ? absint( wp_unslash( $_GET['tray_id'] ) ) : 0;
 
 		check_admin_referer( 'bfmt_' . $action . '_tray_' . $tray_id );
@@ -209,6 +211,7 @@ class BFMT_Tray_Admin {
 	private static function do_save(): void {
 		self::guard();
 
+		// phpcs:ignore WordPress.Security.NonceVerification -- the nonce is keyed to this id; check_admin_referer() on the next line verifies it.
 		$tray_id = isset( $_POST['tray_id'] ) ? absint( wp_unslash( $_POST['tray_id'] ) ) : 0;
 
 		check_admin_referer( $tray_id > 0 ? 'bfmt_edit_tray_' . $tray_id : 'bfmt_add_tray' );
@@ -285,8 +288,8 @@ class BFMT_Tray_Admin {
 			esc_html( sprintf(
 				/* translators: %d: number of rows */
 				_n(
-					'%d row in Microgreen Tracker Lite is not in this tracker. Either it could not be imported (usually a missing seeded date — fix it in Lite), or it was imported by version 1.1.0 and its tray was later deleted. Deactivating and reactivating this plugin imports it; trash the tray again if you did not want it. Keep Lite installed until then: deleting Lite removes the row.',
-					'%d rows in Microgreen Tracker Lite are not in this tracker. Either they could not be imported (usually a missing seeded date — fix them in Lite), or they were imported by version 1.1.0 and their trays were later deleted. Deactivating and reactivating this plugin imports them; trash any trays you did not want. Keep Lite installed until then: deleting Lite removes the rows.',
+					'%d row in Microgreen Tracker Lite is not in this tracker: it was added to Lite since, it could not be imported (usually a missing seeded date — fix it in Lite), or version 1.1.0 imported it and its tray was later deleted. Deactivating and reactivating this plugin imports it (with Pro active, deactivate Pro first); trash the tray again if you did not want it. Keep Lite installed until then: deleting Lite removes the row.',
+					'%d rows in Microgreen Tracker Lite are not in this tracker: they were added to Lite since, could not be imported (usually a missing seeded date — fix them in Lite), or version 1.1.0 imported them and their trays were later deleted. Deactivating and reactivating this plugin imports them (with Pro active, deactivate Pro first); trash any trays you did not want. Keep Lite installed until then: deleting Lite removes the rows.',
 					$waiting,
 					'bluefairy-microgreen-tracker'
 				),

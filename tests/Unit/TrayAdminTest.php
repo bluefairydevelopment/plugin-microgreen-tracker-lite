@@ -442,15 +442,15 @@ final class TrayAdminTest extends TestCase {
 
 		$html = $this->render();
 
-		$this->assertStringContainsString( '<div class="notice notice-warning"><p>2 rows in Microgreen Tracker Lite are not in this tracker.', $html );
-		$this->assertStringContainsString( 'Deactivating and reactivating this plugin imports them; trash any trays you did not want.', $html );
-		$this->assertStringContainsString( 'imported by version 1.1.0 and their trays were later deleted', $html );
+		$this->assertStringContainsString( '<div class="notice notice-warning"><p>2 rows in Microgreen Tracker Lite are not in this tracker:', $html );
+		$this->assertStringContainsString( 'Deactivating and reactivating this plugin imports them (with Pro active, deactivate Pro first); trash any trays you did not want.', $html );
+		$this->assertStringContainsString( 'version 1.1.0 imported them and their trays were later deleted', $html );
 	}
 
 	public function test_one_waiting_row_reads_in_the_singular(): void {
 		$this->lite_table( [ 'wp_bfmtl_grows', '5' ], 4 );
 
-		$this->assertStringContainsString( '1 row in Microgreen Tracker Lite is not in this tracker.', $this->render() );
+		$this->assertStringContainsString( '1 row in Microgreen Tracker Lite is not in this tracker:', $this->render() );
 	}
 
 	/**

@@ -66,7 +66,7 @@ No, and the list is built to mean it: each page is a separate database query rat
 
 = I used Microgreen Tracker Lite 1.0.0, which kept its own table. =
 
-Activate this plugin **before** you delete Lite. Activation brings Lite's rows across into the shared record once — activating twice does not duplicate anything — and leaves Lite's table in place. Deleting Lite first removes that table, and with it the rows this plugin would have imported. If any Lite row is not in the tracker — usually because Lite has no seeded date for it — the Microgreens screen says so. Keep Lite installed, fix the date in Lite, then deactivate and reactivate this plugin to bring it across. (Fixing a harvested or failed row in Lite counts as changing it that day, so check its finish date in Pro afterwards.)
+Activate this plugin **before** you delete Lite. Activation brings Lite's rows across into the shared record once — activating twice does not duplicate anything — and leaves Lite's table in place. Deleting Lite first removes that table, and with it the rows this plugin would have imported. If any Lite row is not in the tracker — usually because Lite has no seeded date for it — the Microgreens screen says so. Keep Lite installed, fix the date in Lite, then deactivate and reactivate this plugin to bring it across (with Microgreen Tracker Pro active, deactivate Pro first). (Fixing a harvested or failed row in Lite counts as changing it that day, so check its finish date in Pro afterwards.)
 
 = Can my staff log trays without a WordPress login? =
 

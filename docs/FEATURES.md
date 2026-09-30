@@ -72,9 +72,10 @@ case, so "amaranth" files with "Amaranth" rather than after "Zucchini".
 
 ## Deleting
 
-A tray goes to the trash. Nothing in this plugin destroys one outright, and
-uninstalling removes only `bfmt_features` and `bfmt_legacy_import` — never a
-grower's records.
+A tray goes to the trash, from where WordPress restores it or empties it on
+its own schedule (a site that sets `EMPTY_TRASH_DAYS` to 0 has no trash, and
+deletes at once). Uninstalling removes only `bfmt_features` and
+`bfmt_legacy_import` — never a grower's records, nor the import record.
 
 ## Coming from Microgreen Tracker Lite 1.0.0
 
@@ -87,8 +88,10 @@ table. Activation imports its rows into the shared record:
 - the old table is left in place. Nothing is dropped.
 
 While any Lite row is not in the tracker — usually because Lite has no seeded
-date for it — the Microgreens screen says how many. Keep Lite
-installed, fix the date in Lite, then deactivate and reactivate this plugin.
+date for it, or it was added to Lite since — the Microgreens screen says how many. Keep Lite
+installed, fix the date in Lite, then deactivate and reactivate this plugin
+(with Pro active, deactivate Pro first — WordPress will not deactivate a plugin
+another active plugin requires).
 Deleting Lite would take those rows with its table.
 `wp option get bfmt_legacy_import` reports the counts: brought across, skipped
 and failed.
@@ -127,8 +130,10 @@ never imported.
   first thing Pro adds.
 - No email, no cron, no scheduled work.
 - No database tables of its own.
-- No settings. Uninstalling removes the plugin's two options (the import
-  record, and the switches an add-on may store) and keeps every tray.
+- No settings. Uninstalling removes two options — the import summary counts
+  (`bfmt_legacy_import`) and the switches an add-on may store
+  (`bfmt_features`) — and keeps every tray and the record of imported Lite
+  rows (`bfmt_legacy_imported_ids`).
 
 ---
 

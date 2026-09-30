@@ -161,6 +161,8 @@ final class MigratorTest extends TestCase {
 
 		$args = bfmt_test_calls( 'get_posts' )[0][0];
 		$this->assertSame( [ 'any', 'trash' ], $args['post_status'] );
+		$this->assertSame( -1, $args['posts_per_page'], 'every imported tray, not a page of them' );
+		$this->assertSame( 'ids', $args['fields'] );
 		$this->assertSame( '_bfmt_legacy_grow_id', $args['meta_key'] );
 		$this->assertSame( [ 7, 9 ], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
 

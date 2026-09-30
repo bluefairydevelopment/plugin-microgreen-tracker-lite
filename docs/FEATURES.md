@@ -48,9 +48,11 @@ status column to fall out of step with the milestone that actually happened.
 
 The three row links are hidden while Microgreen Tracker Pro is active: Pro
 records a harvest with its yield and a failure with its reason, from its own
-tray screens. With Pro deactivated, a tray Pro finished is not offered
-**Mark growing** — reopening it here would leave Pro's yield or rack slot
-behind. Harvest and failure are stored as dates, which is how Pro reads them.
+tray screens. With Pro deactivated, **Mark growing** is not offered on a tray
+Pro finished (it would leave Pro's yield or reason behind), nor on one whose
+rack slot another growing tray now uses (it would put two trays in one slot). A
+tray finished here by mistake can be put back while its slot is still free.
+Harvest and failure are stored as dates, which is how Pro reads them.
 
 Harvested beats failed: a tray that was cut is not also a failure, whichever
 order the two were recorded in.
@@ -91,8 +93,15 @@ Deleting Lite would take those rows with its table.
 `wp option get bfmt_legacy_import` reports the counts: brought across, skipped
 and failed.
 
-A finished Lite row is given the date it was last updated in Lite as its
-harvest or failure date, since Lite recorded no finish date of its own.
+A finished Lite row is given the day it was last changed in Lite as its
+harvest or failure date, since Lite recorded no finish date of its own — unless
+that was the day it was entered, when its expected date is used, else its
+seeded date. Never a date in the future. Fixing a row in Lite changes it that
+day, so check the finish date in Pro after importing a fixed row.
+
+The import keeps its own record of which Lite rows it has brought across
+(`bfmt_legacy_imported_ids`), so a tray trashed or deleted afterwards is never
+imported again.
 
 ## Extension points
 

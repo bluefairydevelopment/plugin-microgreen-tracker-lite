@@ -150,9 +150,8 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 	 *
 	 * Otherwise a growing tray can be finished either way — finishing frees
 	 * any rack slot in Pro's own reckoning, so it corrupts nothing. A finished
-	 * tray can be put back (the undo for a mis-tap) unless Pro finished it:
-	 * reopening would keep Pro's yield or reason and could put two trays in
-	 * one slot.
+	 * tray can be put back (the undo for a mis-tap) unless
+	 * BFMT_Status::reopen_blocker() says Pro finished it or its slot is taken.
 	 *
 	 * @return array<string, string> action => label
 	 */
@@ -162,7 +161,7 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 		}
 
 		if ( BFMT_Status::is_finished( $tray_id ) ) {
-			return BFMT_Status::has_pro_record( $tray_id )
+			return '' !== BFMT_Status::reopen_blocker( $tray_id )
 				? []
 				: [ 'reopen' => __( 'Mark growing', 'bluefairy-microgreen-tracker' ) ];
 		}

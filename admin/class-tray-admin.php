@@ -150,8 +150,12 @@ class BFMT_Tray_Admin {
 			self::redirect_with_notice( [ 'error', __( 'With Microgreen Tracker Pro active, record harvests and failures from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
 		}
 
-		if ( 'reopen' === $action && BFMT_Status::has_pro_record( $tray_id ) ) {
-			self::redirect_with_notice( [ 'error', __( 'This tray was finished in Microgreen Tracker Pro, with records this screen cannot undo. Reactivate Pro to change it.', 'bluefairy-microgreen-tracker' ) ] );
+		$blocker = 'reopen' === $action ? BFMT_Status::reopen_blocker( $tray_id ) : '';
+
+		if ( 'pro' === $blocker ) {
+			self::redirect_with_notice( [ 'error', __( 'This tray was finished in Microgreen Tracker Pro, with its yield or reason. Putting it back here would leave those behind.', 'bluefairy-microgreen-tracker' ) ] );
+		} elseif ( 'slot' === $blocker ) {
+			self::redirect_with_notice( [ 'error', __( 'This tray\'s rack slot is now used by another growing tray, so it cannot go back to growing there.', 'bluefairy-microgreen-tracker' ) ] );
 		}
 
 		$done = match ( $action ) {

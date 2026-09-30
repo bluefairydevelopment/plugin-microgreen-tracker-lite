@@ -124,24 +124,55 @@ class BFMT_Status {
 	}
 
 	/**
-	 * Whether Pro has recorded more about this tray than a status.
+	 * Why a finished tray cannot be put back to growing from here, or ''.
 	 *
-	 * A rack slot, a harvest with its yield or sale, a failure with its reason,
-	 * or a milestone Pro stamped with who recorded it. Reopening such a tray
-	 * here would leave those behind — an old yield in the reports, or two
-	 * trays in one slot — so it is not offered even with Pro deactivated.
+	 * Two reasons, each from evidence rather than from the tray merely having
+	 * come from Pro:
 	 *
-	 * Pro writes a reason key even when the reason is empty, so the check is
-	 * whether the key exists, not whether it has a value.
+	 * - Pro finished it: Pro stamps who recorded a harvest or failure, and
+	 *   stores the yield, sale and failure reason. Reopening here would leave
+	 *   those behind — an old yield counted again in Pro's reports.
+	 * - Its rack slot is taken: a finished tray frees its slot in Pro's
+	 *   reckoning. If another growing tray now occupies that slot, reopening
+	 *   would put two trays in one slot.
+	 *
+	 * A tray that only has a slot, finished here, can be put back while the
+	 * slot is still free — that is the undo for a mis-tap.
 	 */
-	public static function has_pro_record( int $tray_id ): bool {
-		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason', '_mgtrack_harvest_date_by', '_mgtrack_failed_by' ] as $key ) {
+	public static function reopen_blocker( int $tray_id ): string {
+		foreach ( [ '_mgtrack_harvest_date_by', '_mgtrack_failed_by', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason' ] as $key ) {
+			// Existence, not value: Pro writes an empty reason and a '0' yield.
 			if ( metadata_exists( 'post', $tray_id, $key ) ) {
-				return true;
+				return 'pro';
 			}
 		}
 
-		return false;
+		$slot = (string) get_post_meta( $tray_id, '_mgtrack_location', true );
+
+		if ( '' !== $slot && self::slot_taken( $slot, $tray_id ) ) {
+			return 'slot';
+		}
+
+		return '';
+	}
+
+	/**
+	 * Whether another growing tray occupies $slot — Pro's own occupancy rule.
+	 */
+	private static function slot_taken( string $slot, int $except ): bool {
+		return (bool) get_posts( [
+			'post_type'      => BFMT_Tray::POST_TYPE,
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'post__not_in'   => [ $except ],
+			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed lookup, only when reopening.
+				'relation' => 'AND',
+				[ 'key' => '_mgtrack_location', 'value' => $slot ],
+				[ 'key' => '_mgtrack_harvest_date', 'compare' => 'NOT EXISTS' ],
+				[ 'key' => '_mgtrack_failed', 'compare' => 'NOT EXISTS' ],
+			],
+		] );
 	}
 
 	/**

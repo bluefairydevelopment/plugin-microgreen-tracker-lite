@@ -227,7 +227,7 @@ final class TrayTest extends TestCase {
 	}
 
 	/**
-	 * The edit form marks Seeded as required; blanking it on edit is refused.
+	 * A tray that has a seeded date cannot have it erased on edit.
 	 */
 	public function test_update_refuses_to_erase_a_seeded_date(): void {
 		$GLOBALS['bfmt_meta'][1]['_mgtrack_seeding_date'] = '2026-09-01';
@@ -247,6 +247,11 @@ final class TrayTest extends TestCase {
 		$this->assertTrue( BFMT_Tray::update( 1, [ 'seeding_date' => '', 'tray_size' => 'Half' ] ) );
 
 		$this->assertSame( 'Half', $GLOBALS['bfmt_meta'][1]['_mgtrack_tray_size'] );
+		$this->assertArrayNotHasKey( '_mgtrack_seeding_date', $GLOBALS['bfmt_meta'][1] );
+	}
+
+	public function test_a_whitespace_only_seeded_date_counts_as_blank_for_a_tray_not_sown(): void {
+		$this->assertTrue( BFMT_Tray::update( 1, [ 'seeding_date' => '   ', 'tray_size' => 'Half' ] ) );
 		$this->assertArrayNotHasKey( '_mgtrack_seeding_date', $GLOBALS['bfmt_meta'][1] );
 	}
 }

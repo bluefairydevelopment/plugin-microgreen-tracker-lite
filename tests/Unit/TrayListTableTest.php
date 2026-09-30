@@ -220,6 +220,14 @@ final class TrayListTableTest extends TestCase {
 		$this->assertStringNotContainsString( 'Mark ', $this->cell( 'row_actions_col' ) );
 	}
 
+	public function test_a_tray_finished_here_with_a_free_slot_can_be_put_back(): void {
+		update_post_meta( 7, '_mgtrack_location', '1A3' );
+		update_post_meta( 7, '_mgtrack_failed', '2026-09-01' );
+		$GLOBALS['bfmt_posts_result'] = [];
+
+		$this->assertSame( [ 'reopen' ], array_keys( BFMT_Tray_List_Table::status_actions( 7 ) ) );
+	}
+
 	public function test_a_growing_tray_with_a_rack_slot_can_still_be_finished(): void {
 		update_post_meta( 7, '_mgtrack_location', '1A3' );
 

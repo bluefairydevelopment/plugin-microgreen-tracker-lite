@@ -8,12 +8,13 @@
   reads, each behind a nonce keyed to the action and the tray. A repeat is
   success without moving the recorded date; a trashed tray is refused. Until
   now nothing in the free plugin could finish a tray.
-- The status links are hidden, and refused if requested, while Pro is active.
-  With Pro off, Mark growing is not offered on a tray Pro finished (a rack
-  slot, yield, sale, failure reason or a Pro milestone stamp), since reopening
-  it would keep that data or double-book a slot:
+- The status links are hidden, and refused if requested, while Pro is active:
   Pro records a harvest with its yield and sale, a failure with its reason,
   and frees rack slots, and a one-click change here would skip all of that.
+  With Pro off, Mark growing is not offered (`BFMT_Status::reopen_blocker()`)
+  on a tray Pro finished — a `_by` stamp, yield, sale or failure reason — or
+  on one whose rack slot another growing tray now uses. A tray finished here
+  by mistake can be put back while its slot is free.
 - Every row link carries an `aria-label` naming its tray.
 
 ### Fixed
@@ -27,8 +28,13 @@
   dated ones in the default order.
 - The Lite 1.0.0 importer stored a failure as `'1'`; Pro reads
   `_mgtrack_failed` as a date. Harvests and failures now take the row's
-  `updated_at` date (else its expected date, else its seeded date), kept
-  between the seeded date and today.
+  `updated_at` date unless it is the creation day, else its expected date,
+  else its seeded date; never before the seeded date and never after today.
+- The importer decided "already imported" from trays carrying
+  `_bfmt_legacy_grow_id`, which cannot see trashed or deleted trays, so a
+  trashed tray was imported again. It now keeps the imported Lite ids in
+  `bfmt_legacy_imported_ids` (rebuilt once from existing trays, trash
+  included), and counts rows still waiting by id, not by count.
 - A Lite row whose optional expected date was `0000-00-00` (MySQL under
   WordPress runs without NO_ZERO_DATE) failed to import; the date is now
   dropped and the row imported. While any Lite row is still waiting, the

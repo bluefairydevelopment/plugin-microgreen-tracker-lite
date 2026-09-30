@@ -362,17 +362,44 @@ final class TrayAdminTest extends TestCase {
 
 	/**
 	 * With Pro deactivated, a tray Pro finished cannot be reopened here:
-	 * that would keep Pro's yield or reason and could double-book its slot.
+	 * that would leave its yield or reason behind.
 	 */
 	public function test_reopening_a_tray_pro_finished_is_refused(): void {
-		$GLOBALS['bfmt_meta'][1] = [ '_mgtrack_location' => '1A3', '_mgtrack_harvest_date' => '2026-09-01', '_mgtrack_harvest_date_by' => '1' ];
+		$GLOBALS['bfmt_meta'][1] = [ '_mgtrack_harvest_date' => '2026-09-01', '_mgtrack_harvest_date_by' => '1' ];
 
 		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
 
 		$this->assertSame( 'error', $this->notice()[0] );
-		$this->assertStringContainsString( 'Reactivate Pro to change it.', $this->notice()[1] );
+		$this->assertStringContainsString( 'finished in Microgreen Tracker Pro', $this->notice()[1] );
 		$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ) );
 		$this->assertSame( 'harvested', BFMT_Status::get( 1 ) );
+	}
+
+	/**
+	 * A Pro-created tray (it has a slot) mis-tapped as failed HERE can be put
+	 * back while its slot is free — nothing of Pro's is left behind.
+	 */
+	public function test_a_mis_tap_on_a_tray_with_a_free_slot_can_be_undone(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3' ];
+		$GLOBALS['bfmt_posts_result'] = [];
+
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'fail', 'tray_id' => '1' ] );
+		$this->assertSame( 'failed', BFMT_Status::get( 1 ) );
+
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
+
+		$this->assertSame( [ 'updated', 'Tray is growing again.' ], $this->notice() );
+		$this->assertSame( 'active', BFMT_Status::get( 1 ) );
+	}
+
+	public function test_reopening_into_a_slot_another_tray_now_uses_is_refused(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3', '_mgtrack_failed' => '2026-09-01' ];
+		$GLOBALS['bfmt_posts_result'] = [ 2 ];
+
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
+
+		$this->assertStringContainsString( 'rack slot is now used by another growing tray', $this->notice()[1] );
+		$this->assertSame( 'failed', BFMT_Status::get( 1 ) );
 	}
 
 	/**
@@ -381,6 +408,9 @@ final class TrayAdminTest extends TestCase {
 	 */
 	public function test_finishing_a_growing_tray_with_a_rack_slot_is_allowed(): void {
 		$GLOBALS['bfmt_meta'][1] = [ '_mgtrack_location' => '1A3' ];
+		// Even if the slot looks shared: the reopen checks do not apply to
+		// finishing, which frees the slot.
+		$GLOBALS['bfmt_posts_result'] = [ 2 ];
 
 		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '1' ] );
 
@@ -393,15 +423,18 @@ final class TrayAdminTest extends TestCase {
 	 *                              then the row count.
 	 */
 	private function lite_table( array $answers, int $imported ): void {
-		$GLOBALS['wpdb'] = new class( $answers ) {
+		// $answers: [ SHOW TABLES result, number of Lite rows ].
+		$rows            = (int) ( $answers[1] ?? 0 );
+		$GLOBALS['wpdb'] = new class( $answers[0], $rows ) {
 			public string $prefix = 'wp_';
-			public function __construct( private array $answers ) {}
+			public function __construct( private ?string $table, private int $rows ) {}
 			public function esc_like( $t ) { return $t; }
 			public function prepare( $q, ...$a ) { return $q; }
-			public function get_var( $q ) { return array_shift( $this->answers ); }
+			public function get_var( $q ) { return $this->table; }
 			public function get_results( $q ) { return []; }
+			public function get_col( $q ) { return $this->rows ? range( 1, $this->rows ) : []; }
 		};
-		$GLOBALS['bfmt_posts_result'] = range( 1, $imported );
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = $imported ? range( 1, $imported ) : [];
 	}
 
 	public function test_lite_rows_still_waiting_are_announced_with_the_way_to_import_them(): void {
@@ -437,5 +470,14 @@ final class TrayAdminTest extends TestCase {
 		$html = $this->render( [ 'action' => 'edit', 'tray_id' => '1' ] );
 
 		$this->assertStringContainsString( 'Not sown yet. Add the date once it is.', $html );
+	}
+
+	public function test_seeded_is_required_on_add_and_on_a_tray_that_has_a_date(): void {
+		$this->assertMatchesRegularExpression( '#id="bfmt-seeding_date"[^>]*><p class="description">Required\.</p>#', $this->render( [ 'action' => 'add' ] ) );
+
+		update_post_meta( 1, '_mgtrack_seeding_date', '2026-09-01' );
+		$edit = $this->render( [ 'action' => 'edit', 'tray_id' => '1' ] );
+		$this->assertMatchesRegularExpression( '#id="bfmt-seeding_date"[^>]*><p class="description">Required\.</p>#', $edit );
+		$this->assertStringNotContainsString( 'Not sown yet', $edit );
 	}
 }

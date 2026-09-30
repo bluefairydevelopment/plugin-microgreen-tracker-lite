@@ -120,18 +120,39 @@ final class StatusActionsTest extends TestCase {
 		$this->assertFalse( BFMT_Status::is_finished( 5 ) );
 	}
 
-	public function test_a_tray_with_pro_records_is_recognised(): void {
-		$this->assertFalse( BFMT_Status::has_pro_record( 1 ) );
+	public function test_pros_finish_records_block_reopening_even_when_empty(): void {
+		$this->assertSame( '', BFMT_Status::reopen_blocker( 1 ) );
 
-		// An EMPTY value still counts: Pro writes a blank failure reason, and a
-		// zero yield as '0'.
-		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason', '_mgtrack_harvest_date_by', '_mgtrack_failed_by' ] as $key ) {
+		// Existence, not value: Pro writes an empty reason and a '0' yield.
+		foreach ( [ '_mgtrack_harvest_date_by', '_mgtrack_failed_by', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason' ] as $key ) {
 			$GLOBALS['bfmt_meta'] = [ 1 => [ $key => '' ] ];
 
-			$this->assertTrue( BFMT_Status::has_pro_record( 1 ), $key );
+			$this->assertSame( 'pro', BFMT_Status::reopen_blocker( 1 ), $key );
 		}
+	}
 
-		$GLOBALS['bfmt_meta'] = [ 1 => [ '_mgtrack_yield_weight' => '0' ] ];
-		$this->assertTrue( BFMT_Status::has_pro_record( 1 ) );
+	public function test_a_slot_alone_blocks_nothing_while_it_is_free(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3' ];
+		$GLOBALS['bfmt_posts_result'] = [];
+
+		$this->assertSame( '', BFMT_Status::reopen_blocker( 1 ) );
+	}
+
+	/**
+	 * Pro's occupancy rule: another published tray in the same slot with
+	 * neither a harvest nor a failure.
+	 */
+	public function test_a_slot_another_growing_tray_uses_blocks_reopening(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3' ];
+		$GLOBALS['bfmt_posts_result'] = [ 9 ];
+
+		$this->assertSame( 'slot', BFMT_Status::reopen_blocker( 1 ) );
+
+		$args = bfmt_test_calls( 'get_posts' )[0][0];
+		$this->assertSame( [ 1 ], $args['post__not_in'] );
+		$this->assertSame( 'publish', $args['post_status'] );
+		$this->assertSame( [ 'key' => '_mgtrack_location', 'value' => '1A3' ], $args['meta_query'][0] );
+		$this->assertSame( [ 'key' => '_mgtrack_harvest_date', 'compare' => 'NOT EXISTS' ], $args['meta_query'][1] );
+		$this->assertSame( [ 'key' => '_mgtrack_failed', 'compare' => 'NOT EXISTS' ], $args['meta_query'][2] );
 	}
 }

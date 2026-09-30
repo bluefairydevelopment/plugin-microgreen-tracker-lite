@@ -153,16 +153,16 @@ final class PluginBootTest extends TestCase {
 
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
-	public function test_uninstall_removes_the_two_options_and_keeps_every_tray(): void {
+	public function test_uninstall_removes_the_plugins_options_and_keeps_every_tray(): void {
 		require dirname( __DIR__ ) . '/bootstrap.php';
 		bfmt_test_reset();
 
 		define( 'WP_UNINSTALL_PLUGIN', 'bluefairy-microgreen-tracker/bluefairy-microgreen-tracker.php' );
 		require dirname( __DIR__, 2 ) . '/uninstall.php';
 
-		$this->assertSame( [ [ 'bfmt_features' ], [ 'bfmt_legacy_import' ] ], bfmt_test_calls( 'delete_option' ) );
+		$this->assertSame( [ [ 'bfmt_features' ], [ 'bfmt_legacy_import' ], [ 'bfmt_legacy_imported_ids' ] ], bfmt_test_calls( 'delete_option' ) );
 		$this->assertSame( [], bfmt_test_calls( 'wp_trash_post' ) );
 		$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ) );
-		$this->assertSame( [ 'delete_option:bfmt_features', 'delete_option:bfmt_legacy_import' ], bfmt_test_sequence(), 'nothing else ran' );
+		$this->assertSame( [ 'delete_option:bfmt_features', 'delete_option:bfmt_legacy_import', 'delete_option:bfmt_legacy_imported_ids' ], bfmt_test_sequence(), 'nothing else ran' );
 	}
 }

@@ -59,6 +59,15 @@ final class BFMT_Test_Wpdb {
 
 		return $this->rows;
 	}
+
+	/** @var list<int> Lite's ids, for get_col() */
+	public array $ids = [];
+
+	public function get_col( string $query ): array {
+		$this->run( $query );
+
+		return $this->ids;
+	}
 }
 
 final class MigratorTest extends TestCase {
@@ -102,23 +111,32 @@ final class MigratorTest extends TestCase {
 		$this->assertFalse( BFMT_Migrator::legacy_table_exists() );
 	}
 
-	public function test_pending_counts_through_an_identifier_placeholder(): void {
-		$this->db->var_answers = [ 'wp_bfmtl_grows', '12' ];
-
-		$this->assertSame( 12, BFMT_Migrator::pending() );
-		$this->assertSame( [ 'SELECT COUNT(*) FROM %i', [ 'wp_bfmtl_grows' ] ], $this->prepared_starting( 'SELECT COUNT' ) );
-	}
-
-	public function test_pending_subtracts_what_was_already_imported(): void {
-		$this->db->var_answers        = [ 'wp_bfmtl_grows', '5' ];
-		$GLOBALS['bfmt_posts_result'] = [ 11, 12 ];
+	public function test_pending_reads_lites_ids_through_an_identifier_placeholder(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->ids         = [ 1, 2, 3 ];
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [];
 
 		$this->assertSame( 3, BFMT_Migrator::pending() );
+		$this->assertSame( [ 'SELECT id FROM %i', [ 'wp_bfmtl_grows' ] ], $this->prepared_starting( 'SELECT id' ) );
 	}
 
-	public function test_pending_is_never_negative(): void {
-		$this->db->var_answers        = [ 'wp_bfmtl_grows', '5' ];
-		$GLOBALS['bfmt_posts_result'] = range( 1, 7 );
+	/**
+	 * By id, not by count: a row deleted in Lite must not hide one still
+	 * waiting, and an imported tray trashed here must not look un-imported.
+	 */
+	public function test_pending_compares_ids_not_counts(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->ids         = [ 2, 3, 6 ];              // Lite row 1 was deleted in Lite; 6 is new.
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [ 1, 2, 3, 4 ];
+
+		$this->assertSame( 1, BFMT_Migrator::pending() );
+	}
+
+	public function test_pending_is_zero_when_everything_is_imported_even_if_the_trays_are_gone(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->ids         = [ 1, 2 ];
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [ 1, 2 ];
+		$GLOBALS['bfmt_posts_result'] = [];                // no trays left at all
 
 		$this->assertSame( 0, BFMT_Migrator::pending() );
 	}
@@ -130,16 +148,25 @@ final class MigratorTest extends TestCase {
 		$this->assertCount( 1, $this->db->executed, 'only the existence check ran' );
 	}
 
-	public function test_imported_count_asks_for_trays_carrying_the_legacy_id(): void {
-		$GLOBALS['bfmt_posts_result'] = [ 1, 2, 3 ];
+	/**
+	 * 1.1.0 kept no record, only a meta key per tray; the first read rebuilds
+	 * the record from every such tray, trashed ones included, and stores it.
+	 */
+	public function test_the_imported_record_is_rebuilt_once_from_trays_including_trashed_ones(): void {
+		$GLOBALS['bfmt_posts_result'] = [ 21, 22 ];
+		$GLOBALS['bfmt_meta'][21]['_bfmt_legacy_grow_id'] = 7;
+		$GLOBALS['bfmt_meta'][22]['_bfmt_legacy_grow_id'] = 9;
 
-		$this->assertSame( 3, BFMT_Migrator::imported_count() );
+		$this->assertSame( [ 7, 9 ], BFMT_Migrator::imported_ids() );
 
 		$args = bfmt_test_calls( 'get_posts' )[0][0];
-		$this->assertSame( 'mgtrack_tray', $args['post_type'] );
+		$this->assertSame( [ 'any', 'trash' ], $args['post_status'] );
 		$this->assertSame( '_bfmt_legacy_grow_id', $args['meta_key'] );
-		$this->assertSame( 'EXISTS', $args['meta_compare'] );
-		$this->assertSame( 'any', $args['post_status'] );
+		$this->assertSame( [ 7, 9 ], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
+
+		BFMT_Migrator::imported_ids();
+		$this->assertCount( 1, bfmt_test_calls( 'get_posts' ), 'read from the record after that' );
+		$this->assertSame( 2, BFMT_Migrator::imported_count() );
 	}
 
 	public function test_run_reads_through_an_identifier_placeholder(): void {
@@ -164,12 +191,13 @@ final class MigratorTest extends TestCase {
 		}
 
 		$this->db->executed    = [];
-		$this->db->var_answers = [ 'wp_bfmtl_grows', '0', 'wp_bfmtl_grows' ];
+		$this->db->var_answers = [ 'wp_bfmtl_grows', 'wp_bfmtl_grows' ];
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [];
 
 		BFMT_Migrator::pending();
 		BFMT_Migrator::run();
 
-		// pending(): existence check + count; run(): existence check + select.
+		// pending(): existence check + id list; run(): existence check + select.
 		$this->assertCount( 4, $this->db->executed );
 	}
 
@@ -184,7 +212,7 @@ final class MigratorTest extends TestCase {
 	public function test_a_row_already_imported_is_skipped(): void {
 		$this->db->var_answers        = [ 'wp_bfmtl_grows' ];
 		$this->db->rows               = [ (object) [ 'id' => 3 ] ];
-		$GLOBALS['bfmt_posts_result'] = [ 99 ];
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [ 3 ];
 
 		$result = BFMT_Migrator::run();
 
@@ -209,6 +237,7 @@ final class MigratorTest extends TestCase {
 		$result = BFMT_Migrator::run();
 
 		$this->assertSame( [ 'imported' => 3, 'skipped' => 0, 'failed' => 0 ], $result );
+		$this->assertSame( [ 1, 2, 3 ], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
 		$this->assertSame( $result, $GLOBALS['bfmt_options']['bfmt_legacy_import'] );
 
 		[ $kale, $pea, $radish ] = [ 100, 101, 102 ];
@@ -319,5 +348,33 @@ final class MigratorTest extends TestCase {
 		$this->assertSame( '2026-04-01', $GLOBALS['bfmt_meta'][100]['_mgtrack_seeding_date'] );
 		$this->assertSame( '2026-04-11', $GLOBALS['bfmt_meta'][100]['_mgtrack_expected_harvest_date'] );
 		$this->assertSame( 'Half tray', $GLOBALS['bfmt_meta'][100]['_mgtrack_tray_size'] );
+	}
+
+	/**
+	 * A tray trashed or deleted after import stays imported: reactivating
+	 * does not bring it back as a duplicate.
+	 */
+	public function test_a_row_whose_tray_was_deleted_is_not_imported_again(): void {
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [ 1 ];
+		$GLOBALS['bfmt_posts_result'] = [];
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->rows        = [
+			(object) [ 'id' => 1, 'variety' => 'Kale', 'seeded_date' => '2026-01-02', 'expected_harvest_date' => '', 'tray_size' => '', 'status' => 'active' ],
+			(object) [ 'id' => 2, 'variety' => 'Pea', 'seeded_date' => '2026-01-03', 'expected_harvest_date' => '', 'tray_size' => '', 'status' => 'active' ],
+		];
+
+		$this->assertSame( [ 'imported' => 1, 'skipped' => 1, 'failed' => 0 ], BFMT_Migrator::run() );
+		$this->assertCount( 1, bfmt_test_calls( 'wp_insert_post' ) );
+		$this->assertSame( [ 1, 2 ], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
+	}
+
+	public function test_a_row_that_fails_to_import_is_not_recorded_as_imported(): void {
+		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [];
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->rows        = [ (object) [ 'id' => 4, 'variety' => 'Kale', 'seeded_date' => '0000-00-00', 'expected_harvest_date' => '', 'tray_size' => '', 'status' => 'active' ] ];
+
+		BFMT_Migrator::run();
+
+		$this->assertSame( [], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
 	}
 }

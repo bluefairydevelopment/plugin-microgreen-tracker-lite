@@ -43,6 +43,7 @@ final class BFMT_Test_No_Legacy_Wpdb {
 	public function prepare( $query, ...$args ) { return $query; }
 	public function get_var( $query ) { return null; }
 	public function get_results( $query ) { return []; }
+	public function get_col( $query ) { return []; }
 }
 
 function bfmt_test_reset(): void {

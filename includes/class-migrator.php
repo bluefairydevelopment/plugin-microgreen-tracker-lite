@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
 class BFMT_Migrator {
 
 	public const DONE_OPTION   = 'bfmt_legacy_import';
+	public const IDS_OPTION    = 'bfmt_legacy_imported_ids';
 	private const SOURCE_KEY   = '_bfmt_legacy_grow_id';
 	private const LEGACY_TABLE = 'bfmtl_grows';
 
@@ -36,28 +37,71 @@ class BFMT_Migrator {
 		return (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
 	}
 
+	/**
+	 * How many Lite rows have not been brought across.
+	 *
+	 * Compared by id, not by count: a row deleted in Lite, or an imported tray
+	 * trashed or deleted here, must not hide a row that is still waiting — nor
+	 * report one that is not.
+	 */
 	public static function pending(): int {
-		global $wpdb;
-
 		if ( ! self::legacy_table_exists() ) {
 			return 0;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a one-time import count, not cacheable.
-		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', self::legacy_table() ) );
+		return count( array_diff( self::legacy_ids(), self::imported_ids() ) );
+	}
 
-		return max( 0, $total - self::imported_count() );
+	/**
+	 * @return list<int> every id in Lite's table
+	 */
+	private static function legacy_ids(): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- reads Lite's own table, which WordPress has no API for; one indexed column.
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i', self::legacy_table() ) ) );
+	}
+
+	/**
+	 * The Lite row ids already imported, as recorded in IDS_OPTION.
+	 *
+	 * The record outlives the trays: a tray trashed, or deleted for good, is
+	 * still "imported", so re-activating never brings it back as a duplicate.
+	 * 1.1.0 kept no such record, only a meta key on each tray, so the first
+	 * read rebuilds it from those trays — trashed ones included.
+	 *
+	 * @return list<int>
+	 */
+	public static function imported_ids(): array {
+		$stored = get_option( self::IDS_OPTION, null );
+
+		if ( is_array( $stored ) ) {
+			return array_map( 'intval', $stored );
+		}
+
+		$ids = [];
+
+		$trays = get_posts( [
+			'post_type'      => BFMT_Tray::POST_TYPE,
+			'post_status'    => [ 'any', 'trash' ],
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_key'       => self::SOURCE_KEY,          // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs once, to build the record 1.1.0 did not keep.
+			'meta_compare'   => 'EXISTS',
+		] );
+
+		foreach ( $trays as $tray_id ) {
+			$ids[] = (int) get_post_meta( (int) $tray_id, self::SOURCE_KEY, true );
+		}
+
+		$ids = array_values( array_unique( array_filter( $ids ) ) );
+		update_option( self::IDS_OPTION, $ids, false );
+
+		return $ids;
 	}
 
 	public static function imported_count(): int {
-		return count( get_posts( [
-			'post_type'      => BFMT_Tray::POST_TYPE,
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_key'       => self::SOURCE_KEY,          // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- counting what has already been imported, once.
-			'meta_compare'   => 'EXISTS',
-		] ) );
+		return count( self::imported_ids() );
 	}
 
 	/**
@@ -74,11 +118,13 @@ class BFMT_Migrator {
 			return $result;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a one-time import, not cacheable.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the import reads Lite's own table, on activation only.
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id ASC', self::legacy_table() ) );
 
+		$imported = self::imported_ids();
+
 		foreach ( (array) $rows as $row ) {
-			if ( self::already_imported( (int) $row->id ) ) {
+			if ( in_array( (int) $row->id, $imported, true ) ) {
 				++$result['skipped'];
 				continue;
 			}
@@ -110,9 +156,11 @@ class BFMT_Migrator {
 			}
 
 			update_post_meta( $tray_id, self::SOURCE_KEY, (int) $row->id );
+			$imported[] = (int) $row->id;
 			++$result['imported'];
 		}
 
+		update_option( self::IDS_OPTION, $imported, false );
 		update_option( self::DONE_OPTION, $result, false );
 
 		return $result;
@@ -132,8 +180,8 @@ class BFMT_Migrator {
 	 * last edited — usually the status change — so it is the closest record,
 	 * unless it is the day the row was created (a row entered already
 	 * finished), when the expected date says more. Then the seeded date. The
-	 * answer is kept between the seeded date and today: never before sowing,
-	 * never in the future, even if the seeded date itself was mistyped ahead.
+	 * answer is never before sowing and never in the future; if the seeded
+	 * date itself was mistyped into the future, it is today.
 	 */
 	public static function finished_on( object $row ): string {
 		$seeded  = (string) $row->seeded_date;
@@ -158,16 +206,5 @@ class BFMT_Migrator {
 		// Plain string comparison is date order for Y-m-d. Today is applied
 		// last, so it wins even over a seeded date in the future.
 		return min( max( $seeded, $date ), $today );
-	}
-
-	private static function already_imported( int $legacy_id ): bool {
-		return (bool) get_posts( [
-			'post_type'      => BFMT_Tray::POST_TYPE,
-			'post_status'    => 'any',
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-			'meta_key'       => self::SOURCE_KEY,   // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- keyed lookup by design; this is the idempotency check.
-			'meta_value'     => $legacy_id,         // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- see above.
-		] );
 	}
 }

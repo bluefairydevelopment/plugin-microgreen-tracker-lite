@@ -2,9 +2,10 @@
 /**
  * Uninstall.
  *
- * Trays are NOT deleted. They are the grower's records, they are shared with
- * the Pro add-on, and 1.0.0's uninstall dropped its table outright — which is
- * how a season could vanish when someone tidied up after upgrading.
+ * Trays are NOT deleted. They are the grower's records, and they are shared
+ * with the Pro add-on. Nor is the record of which Lite rows were imported
+ * (bfmt_legacy_imported_ids): it belongs with the trays it describes, and
+ * without it a reinstall would bring back trays the grower deleted.
  *
  * @package BlueFairy\MicrogreenTracker
  */

@@ -5,7 +5,7 @@ BlueFairy Microgreen Tracker — Marketing Content
 3-SENTENCE SUMMARY
 ------------------
 
-BlueFairy Microgreen Tracker is a free WordPress plugin that keeps a grow log for microgreen trays — variety, tray size, seeded date and expected harvest — with the variety stored as a taxonomy term so your names build up as you use them instead of drifting into typos. Every tray lives in your own WordPress database as an ordinary post type, readable from WP-CLI, with dates validated against the real calendar rather than a pattern. Racks and locations, harvest planning, yield and cost reporting, a grow-room staff role and front-end shortcodes are in the paid add-on, Microgreen Tracker Pro.
+BlueFairy Microgreen Tracker is a free WordPress plugin that keeps a grow log for microgreen trays — variety, tray size, seeded date and expected harvest — with the variety stored as a taxonomy term, so typing a name you have used before files the tray under that variety. Every tray lives in your own WordPress database as an ordinary post type, readable from WP-CLI, with dates validated against the real calendar rather than a pattern. Racks and locations, harvest planning, yield and cost reporting, a grow-room staff role and front-end shortcodes are in the paid add-on, Microgreen Tracker Pro.
 
 
 CSS CLASS PREFIX
@@ -25,7 +25,7 @@ HTML LONG DESCRIPTION
 
 <ul>
   <li><strong>One tray record.</strong> Variety, tray size, seeded date and expected harvest, stored on an ordinary <code>mgtrack_tray</code> post type.</li>
-  <li><strong>Variety as a taxonomy.</strong> Names accumulate as you use them, so a typo does not quietly become a second variety.</li>
+  <li><strong>Variety as a taxonomy.</strong> Type a name you have used before and the tray joins that variety; capitals don't matter.</li>
   <li><strong>Dates that are actually checked.</strong> A value is validated against the calendar before it is written, and refused with the value quoted back — <code>2026-02-30</code> has the right shape and is not a day.</li>
   <li><strong>Status you cannot contradict.</strong> A tray's status is derived from what has happened to it, never stored as a separate field that can disagree.</li>
   <li><strong>Readable from the command line.</strong> <code>wp post list --post_type=mgtrack_tray</code>.</li>
@@ -39,7 +39,7 @@ HTML LONG DESCRIPTION
   <li><strong>Racks and locations</strong> — occupancy across shelves and slots, with a full slot refused rather than double-booked.</li>
   <li><strong>Harvest planning</strong> — plan backwards from the date you need the crop.</li>
   <li><strong>Yield and cost reporting</strong> — what each tray produced and what it cost to produce.</li>
-  <li><strong>A grow-room role and five front-end shortcodes</strong> — staff log trays and milestones from a phone, without ever seeing wp-admin.</li>
+  <li><strong>A grow-room role and five front-end shortcodes</strong> — staff log trays and milestones from a phone, without needing wp-admin.</li>
 </ul>
 
 <p><a href="/product/bluefairy-microgreen-tracker-pro/">Get Microgreen Tracker Pro — $125</a></p>

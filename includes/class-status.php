@@ -55,6 +55,139 @@ class BFMT_Status {
 	}
 
 	/**
+	 * Whether a status action may touch this tray: a tray, and not in the trash.
+	 *
+	 * A nonce'd link from before the tray was trashed stays valid for a day;
+	 * it must not quietly change a record nobody can see.
+	 */
+	private static function actionable( int $tray_id ): bool {
+		return BFMT_Tray::is_tray( $tray_id ) && 'trash' !== get_post_status( $tray_id );
+	}
+
+	/**
+	 * Record that a tray was cut, on $date.
+	 *
+	 * Writes the milestone Pro records — the harvest DATE under the key Pro
+	 * reads — so a tray harvested here reads as harvested there. A harvest
+	 * clears a failure: harvested beats failed in get() anyway, and a leftover
+	 * flag would resurface if the harvest were undone.
+	 *
+	 * Already harvested is success without a write: a second click, or a stale
+	 * tab, must not move the recorded harvest date.
+	 */
+	public static function mark_harvested( int $tray_id, string $date ): bool {
+		if ( ! self::actionable( $tray_id ) || ! BFMT_Tray::is_date( $date ) ) {
+			return false;
+		}
+
+		if ( get_post_meta( $tray_id, self::HARVEST_KEY, true ) ) {
+			return true;
+		}
+
+		delete_post_meta( $tray_id, self::FAILED_KEY );
+
+		return false !== update_post_meta( $tray_id, self::HARVEST_KEY, $date );
+	}
+
+	/**
+	 * Record that a tray failed, on $date.
+	 *
+	 * Pro stores the failure as the date it happened and works a tray's days
+	 * and cost out from it, so this stores a date too, never a bare flag.
+	 * Refused on a harvested tray: it was cut. Already failed is success
+	 * without a write.
+	 */
+	public static function mark_failed( int $tray_id, string $date ): bool {
+		if ( ! self::actionable( $tray_id ) || ! BFMT_Tray::is_date( $date ) || get_post_meta( $tray_id, self::HARVEST_KEY, true ) ) {
+			return false;
+		}
+
+		if ( get_post_meta( $tray_id, self::FAILED_KEY, true ) ) {
+			return true;
+		}
+
+		return false !== update_post_meta( $tray_id, self::FAILED_KEY, $date );
+	}
+
+	/**
+	 * Put a harvested or failed tray back to growing — the undo for both.
+	 */
+	public static function reopen( int $tray_id ): bool {
+		if ( ! self::actionable( $tray_id ) ) {
+			return false;
+		}
+
+		delete_post_meta( $tray_id, self::HARVEST_KEY );
+		delete_post_meta( $tray_id, self::FAILED_KEY );
+
+		return true;
+	}
+
+	/**
+	 * Why a finished tray cannot be put back to growing from here, or ''.
+	 *
+	 * Two reasons, each from evidence rather than from the tray merely having
+	 * come from Pro:
+	 *
+	 * - Pro finished it: Pro stamps who recorded a harvest or failure, and
+	 *   stores the yield, sale and failure reason. Reopening here would leave
+	 *   those behind — an old yield counted again in Pro's reports.
+	 * - Its rack slot is taken: a finished tray frees its slot in Pro's
+	 *   reckoning. If another unfinished tray now occupies that slot, reopening
+	 *   would put two trays in one slot.
+	 *
+	 * A tray that only has a slot, finished here, can be put back while the
+	 * slot is still free — that is the undo for a mis-tap.
+	 */
+	public static function reopen_blocker( int $tray_id ): string {
+		foreach ( [ '_mgtrack_harvest_date_by', '_mgtrack_failed_by', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason' ] as $key ) {
+			// Existence, not value: Pro writes an empty reason and a '0' yield.
+			if ( metadata_exists( 'post', $tray_id, $key ) ) {
+				return 'pro';
+			}
+		}
+
+		$slot = (string) get_post_meta( $tray_id, '_mgtrack_location', true );
+
+		if ( '' !== $slot && self::slot_taken( $slot, $tray_id ) ) {
+			return 'slot';
+		}
+
+		return '';
+	}
+
+	/**
+	 * Whether another unfinished tray occupies $slot — Pro's own occupancy rule.
+	 */
+	private static function slot_taken( string $slot, int $except ): bool {
+		// Two at most: the tray itself cannot be among them (it is finished),
+		// but the caller's tray is filtered out in PHP rather than with
+		// post__not_in, which Plugin Check flags as a slow query pattern.
+		$holders = get_posts( [
+			'post_type'      => BFMT_Tray::POST_TYPE,
+			'post_status'    => 'publish',
+			'posts_per_page' => 2,
+			'fields'         => 'ids',
+			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed lookup, only when reopening.
+				'relation' => 'AND',
+				[ 'key' => '_mgtrack_location', 'value' => $slot ],
+				[ 'key' => '_mgtrack_harvest_date', 'compare' => 'NOT EXISTS' ],
+				[ 'key' => '_mgtrack_failed', 'compare' => 'NOT EXISTS' ],
+			],
+		] );
+
+		return [] !== array_diff( array_map( 'intval', (array) $holders ), [ $except ] );
+	}
+
+	/**
+	 * Whether a tray has reached either end of its cycle.
+	 */
+	public static function is_finished( int $tray_id ): bool {
+		return (bool) get_post_meta( $tray_id, self::HARVEST_KEY, true )
+			|| (bool) get_post_meta( $tray_id, self::FAILED_KEY, true );
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	public static function labels(): array {
@@ -70,6 +203,12 @@ class BFMT_Status {
 	}
 
 	/**
+	 * Text and background colour for each status.
+	 *
+	 * The value is "text;background:background", the shape Pro 1.4.0 already
+	 * returns through the filter. Changing it would break an add-on already on
+	 * customers' sites, so the shape stays and stylesheet() parses it.
+	 *
 	 * @return array<string, string> status => "colour;background:colour"
 	 */
 	public static function colours(): array {
@@ -80,13 +219,70 @@ class BFMT_Status {
 		] );
 	}
 
+	/**
+	 * The badge for one status.
+	 *
+	 * Colour comes from the admin stylesheet, not a style attribute: the class
+	 * names a rule stylesheet() writes for every status colours() knows,
+	 * including the ones an add-on contributes.
+	 */
 	public static function badge( string $status ): string {
-		$colour = self::colours()[ $status ] ?? '#374151;background:#f3f4f6';
-
 		return sprintf(
-			'<span style="%s">%s</span>',
-			esc_attr( 'color:' . $colour . ';padding:2px 8px;border-radius:3px;font-size:.8em;font-weight:600;display:inline-block;' ),
+			'<span class="bfmt-badge %s">%s</span>',
+			esc_attr( self::badge_class( $status ) ),
 			esc_html( self::label( $status ) )
 		);
+	}
+
+	/**
+	 * The modifier class for a status.
+	 *
+	 * Status keys come from a filter, so anything outside a-z, 0-9, _ and - is
+	 * dropped rather than trusted to be a valid class name.
+	 */
+	public static function badge_class( string $status ): string {
+		return 'bfmt-badge--' . preg_replace( '/[^a-z0-9_-]/', '', strtolower( $status ) );
+	}
+
+	/**
+	 * One CSS rule per status, for wp_add_inline_style().
+	 *
+	 * The colours arrive through a filter and end up inside a <style> element,
+	 * so each one has to be a hex colour and nothing else. An entry that does
+	 * not parse is left out and that status falls back to the neutral colour in
+	 * the stylesheet, rather than letting a stray "}" or "</style>" through.
+	 */
+	public static function stylesheet(): string {
+		$rules = [];
+
+		foreach ( self::colours() as $status => $value ) {
+			$parsed = self::parse_colour( (string) $value );
+
+			if ( null === $parsed ) {
+				continue;
+			}
+
+			$rules[] = sprintf(
+				'.bfmt-badge.%s{color:%s;background:%s}',
+				self::badge_class( (string) $status ),
+				$parsed['color'],
+				$parsed['background']
+			);
+		}
+
+		return implode( "\n", $rules );
+	}
+
+	/**
+	 * Split "text;background:background" into two checked hex colours.
+	 *
+	 * @return array{color:string, background:string}|null
+	 */
+	public static function parse_colour( string $value ): ?array {
+		if ( ! preg_match( '/^\s*(#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s*;\s*background\s*:\s*(#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s*;?\s*$/iD', $value, $m ) ) {
+			return null;
+		}
+
+		return [ 'color' => strtolower( $m[1] ), 'background' => strtolower( $m[2] ) ];
 	}
 }

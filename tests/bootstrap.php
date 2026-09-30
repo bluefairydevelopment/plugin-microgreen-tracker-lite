@@ -1,16 +1,26 @@
 <?php
 /**
- * Bootstrap for the pure-unit suite.
+ * Bootstrap for the unit suite.
  *
- * Date validation and the status derivation are the two pieces of logic that
- * decide whether a grower's record is accepted and what it says, and both can
- * be exercised without WordPress. Everything that needs a real install is in
- * tests/integration-checks.php.
+ * Loads the real plugin file — not the classes one by one — against recording
+ * stubs, so the constants, the marker function and the hooks the plugin file
+ * registers are the ones that ship. Everything that needs a real install is in
+ * tests/integration-checks.php and the Playwright suite.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/stubs.php';
-require_once __DIR__ . '/../includes/class-tray.php';
-require_once __DIR__ . '/../includes/class-status.php';
-require_once __DIR__ . '/../includes/class-feature-registry.php';
+
+// is_admin() is false while the plugin file loads, as on the front end; the
+// admin classes are loaded below so they can be tested directly.
+require_once dirname( __DIR__ ) . '/bluefairy-microgreen-tracker.php';
+
+require_once dirname( __DIR__ ) . '/admin/class-tray-list-table.php';
+require_once dirname( __DIR__ ) . '/admin/class-tray-admin.php';
+require_once dirname( __DIR__ ) . '/admin/class-pro-upsell.php';
+
+/**
+ * What the plugin file itself did while loading, before any test reset it.
+ */
+$GLOBALS['bfmt_load_calls'] = $GLOBALS['bfmt_calls'];

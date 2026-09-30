@@ -11,6 +11,10 @@ use PHPUnit\Framework\TestCase;
 
 final class TrayDateTest extends TestCase {
 
+	protected function setUp(): void {
+		bfmt_test_reset();
+	}
+
 	public function test_a_real_date_is_accepted(): void {
 		$this->assertTrue( BFMT_Tray::is_date( '2026-03-14' ) );
 	}

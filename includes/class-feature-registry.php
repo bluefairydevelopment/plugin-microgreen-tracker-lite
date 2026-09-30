@@ -1,6 +1,12 @@
 <?php
 /**
- * The feature switches, and the seam the Pro add-on adds its own to.
+ * An extension point for add-on feature switches.
+ *
+ * Nothing in this plugin is behind a switch: labels() is empty unless an
+ * add-on fills it through bfmt_feature_labels, and this plugin never writes
+ * bfmt_features. Pro 1.4.0 does not use it either. It stays so a future add-on
+ * can offer switches without a schema change, and is_enabled() treats an
+ * unknown switch as on so a switch added later cannot disable anything.
  *
  * @package BlueFairy\MicrogreenTracker
  */

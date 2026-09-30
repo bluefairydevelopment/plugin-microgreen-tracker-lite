@@ -9,12 +9,14 @@ everything downstream.
 | Record a tray: variety, size, seeded date | yes | yes, inherited |
 | Expected harvest date you type | yes | yes, inherited |
 | Tray list with status, sortable, paged | yes | yes, inherited |
+| Mark a tray harvested or failed | yes, from the tray list | yes, from Pro's tray screens (with yield or reason) |
+| Undo a harvest or a failure | yes (Mark growing) | a harvest only; a failure cannot be undone in Pro 1.4.0 |
 | Trays kept on uninstall | yes | yes, inherited |
 | **Expected harvest worked out from the variety** | — | **yes** |
-| **Soak, weight on, darkness lifted, germination milestones** | — | **yes** |
+| **Soak, weight on, germination, darkness lifted milestones** | — | **yes** |
 | **Seven-state grow cycle instead of three** | — | **yes** |
 | **Seed variety library** (days to harvest, soak, seed rate, bag price) | — | **yes** |
-| **Yield and germination rates per variety** | — | **yes** |
+| **Average yield, harvested and failed counts per variety** | — | **yes** |
 | **Cost per tray, and expense tracking** | — | **yes** |
 | **Rack and location grid** | — | **yes** |
 | **Harvest planning, backwards from a delivery date** | — | **yes** |

@@ -3,7 +3,7 @@
  * Plugin Name:       BlueFairy Microgreen Tracker
  * Plugin URI:        https://wordpress.bluefairydevelopment.com/bluefairy-microgreen-tracker/
  * Description:       A grow log for microgreen trays: variety, tray size, seeded date, expected harvest, status.
- * Version:           1.1.0
+ * Version:           1.1.1
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Blue Fairy Development
@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BFMT_VERSION',  '1.1.0' );
+define( 'BFMT_VERSION',  '1.1.1' );
 define( 'BFMT_FILE',     __FILE__ );
 define( 'BFMT_PATH',     plugin_dir_path( __FILE__ ) );
 define( 'BFMT_URL',      plugin_dir_url( __FILE__ ) );

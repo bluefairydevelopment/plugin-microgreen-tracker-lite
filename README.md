@@ -2,45 +2,44 @@
 
 A grow log for microgreen trays. This is the free base plugin;
 [Microgreen Tracker Pro](https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-pro/)
-is an add-on that extends it and holds no copy of its work.
+is an add-on that extends it and holds no copy of its data.
 
 ## Architecture
 
 ```
-bluefairy-microgreen-tracker.php   constants, requires, bfmt_plugin() marker
-includes/class-tray.php            the tray record: post type, taxonomy, fields, CRUD
-includes/class-status.php          the derived status, and the filter Pro replaces it at
-includes/class-feature-registry.php the switches Pro adds its own to
-includes/class-migrator.php        1.0.0's table, imported once and left in place
-admin/                             the list, the form, the Pro panel
+bluefairy-microgreen-tracker.php    constants, requires, bfmt_plugin() marker
+includes/class-tray.php             the tray record: post type, taxonomy, fields, CRUD
+includes/class-status.php           the derived status, the filter an add-on replaces it at,
+                                    and the harvested / failed / growing actions
+includes/class-feature-registry.php an extension point for add-on switches
+includes/class-migrator.php         imports Microgreen Tracker Lite 1.0.0's table once
+admin/                              the list, the form, the Pro panel
+assets/                             the Microgreens screen's stylesheet and script
 ```
 
-`BFMT_Tray` is the only place that knows where a tray's data lives. Pro calls
-`register_field()` and answers `bfmt_tray_status`; it does not register the post
-type, the taxonomy, or any meta key.
+`BFMT_Tray` is the only place that knows where a tray's data lives. An add-on
+calls `register_field()` and answers `bfmt_tray_status`; it does not register
+the post type, the taxonomy, or any meta key.
 
-## The names are inherited, on purpose
+## Stored names
 
-`mgtrack_tray`, `mgtrack_seed` and every `_mgtrack_*` key come from the paid
-plugin's 1.3.3 model, because a real farm has trays stored under exactly those
-names. They are not re-prefixed to match the rest of the estate.
+`mgtrack_tray`, `mgtrack_seed` and the `_mgtrack_*` meta keys are the storage
+schema of existing installs of the Pro add-on. They keep that prefix so those
+trays are readable the moment this plugin is activated.
 
-The seeded date is `_mgtrack_seeding_date`. The retired free table called the
-same field `seeded_date`, and assuming the two matched cost an hour and a
-rewritten class.
+A harvest and a failure are stored as dates (`_mgtrack_harvest_date`,
+`_mgtrack_failed`), which is the form Pro reads them in.
 
 ## Development
 
+The unit suite and its stubs live in the source repository, not in the
+distributed plugin.
+
 ```
 composer install
-vendor/bin/phpunit                                          # 20 unit tests
-wp eval-file .../tests/integration-checks.php               # from the site root
+vendor/bin/phpunit
 ```
-
-The unit tests have been checked against deliberate mutations: dropping
-`checkdate()`, reversing the harvested/failed precedence, and removing the
-status filter all turn the suite red.
 
 ## Licence
 
-GPL-2.0-or-later.
+GPL-2.0-or-later. See `LICENSE`.

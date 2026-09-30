@@ -16,8 +16,9 @@ you have already logged.
 | Seeded | `_mgtrack_seeding_date` |
 | Expected harvest | `_mgtrack_expected_harvest_date` |
 
-The variety is a taxonomy term rather than a text field, so the names build up
-as you use them and a typo does not become a second variety.
+The variety is a taxonomy term rather than a text field, so a name is stored
+once and reused: type the same name again (capitals don't matter) and the tray
+joins that variety. A different spelling is a different variety.
 
 **Check your trays from the command line:** `wp post list --post_type=mgtrack_tray`
 
@@ -30,9 +31,9 @@ The check is a real calendar check, not a pattern match. `2026-02-30` has
 exactly the right shape and is not a day, so it is refused rather than stored.
 You are never told a tray was saved when it was not.
 
-`03/14/2026` is refused rather than guessed at. Reading it as the 3rd of
-February would silently record the wrong day for anyone whose locale writes
-dates the other way round.
+`03/04/2026` is refused rather than guessed at. Reading it as the 3rd of April
+would silently record the wrong day for anyone whose locale writes it as the
+4th of March.
 
 ## Status
 
@@ -41,9 +42,17 @@ status column to fall out of step with the milestone that actually happened.
 
 | State | When |
 |---|---|
-| Harvested | a harvest date is recorded |
-| Failed | the tray is marked failed |
-| Active | anything else |
+| Harvested | a harvest date is recorded — **Mark harvested** on the tray's row records today |
+| Failed | the tray is marked failed — **Mark failed** on its row |
+| Active | anything else — **Mark growing** puts a finished tray back |
+
+The three row links are hidden while Microgreen Tracker Pro is active: Pro
+records a harvest with its yield and a failure with its reason, from its own
+tray screens. With Pro deactivated, **Mark growing** is not offered on a tray
+Pro finished (it would leave Pro's yield or reason behind), nor on one whose
+rack slot another unfinished tray now uses (it would put two trays in one slot). A
+tray finished here by mistake can be put back while its slot is still free.
+Harvest and failure are stored as dates, which is how Pro reads them.
 
 Harvested beats failed: a tray that was cut is not also a failure, whichever
 order the two were recorded in.
@@ -63,21 +72,46 @@ case, so "amaranth" files with "Amaranth" rather than after "Zucchini".
 
 ## Deleting
 
-A tray goes to the trash. Nothing in this plugin destroys one outright, and
-uninstalling removes only `bfmt_features` and `bfmt_legacy_import` — never a
-grower's records.
+A tray goes to the trash. WordPress empties the trash on its own schedule (a
+site that sets `EMPTY_TRASH_DAYS` to 0 has no trash, and deletes at once). To
+restore a tray, open `wp-admin/edit.php?post_type=mgtrack_tray&post_status=trash`
+— there is no link to it on the Microgreens screen. Uninstalling removes only
+`bfmt_features` and `bfmt_legacy_import` — never a grower's records, nor the
+record of imported Lite rows (`bfmt_legacy_imported_ids`).
 
-## Coming from 1.0.0
+## Coming from Microgreen Tracker Lite 1.0.0
 
-Version 1.0.0 kept grows in its own `wp_bfmtl_grows` table, which Pro could not
-read. Activating 1.1.0 imports those rows into the shared record:
+Lite 1.0.0 kept grows in its own `wp_bfmtl_grows` table, which Pro could not
+read. **Activate this plugin before you delete Lite** — deleting Lite drops that
+table. Activation imports its rows into the shared record:
 
 - once, tracked per row, so activating twice does not duplicate anything;
 - statuses become the milestone that produced them, since status is derived here;
 - the old table is left in place. Nothing is dropped.
 
-**Check the import ran:** `wp option get bfmt_legacy_import` reports how many
-rows were brought across, skipped and failed.
+While any Lite row is not in the tracker — usually because Lite has no seeded
+date for it, or it was added to Lite since — the Microgreens screen says how many. Keep Lite
+installed, fix the date in Lite, then deactivate and reactivate this plugin
+(with Pro active, deactivate Pro first — the Plugins screen does not offer
+Deactivate for a plugin another active plugin requires).
+Deleting Lite would take those rows with its table.
+`wp option get bfmt_legacy_import` reports the counts: brought across, skipped
+and failed.
+
+A finished Lite row is given the day it was last changed in Lite as its
+harvest or failure date, since Lite recorded no finish date of its own — unless
+that was the day it was entered, when its expected date is used, else its
+seeded date. Never a date in the future. Fixing a row in Lite changes it that
+day, so check the finish date in Pro after importing a fixed row.
+
+The import keeps its own record of which Lite rows it has brought across
+(`bfmt_legacy_imported_ids`), written row by row, so a tray trashed or deleted
+afterwards is not imported again and an import cut short repeats at most the
+row it was on. Uninstalling keeps the record, as it keeps the trays. After an
+update from 1.1.0, which kept no record, it is rebuilt from the trays that
+remain; a Lite row whose tray was deleted under 1.1.0 is then shown as not in
+the tracker rather than guessed at, since a guess could lose a row that was
+never imported.
 
 ## Extension points
 
@@ -98,7 +132,10 @@ rows were brought across, skipped and failed.
   first thing Pro adds.
 - No email, no cron, no scheduled work.
 - No database tables of its own.
-- Two options, both removed on uninstall.
+- No settings. Uninstalling removes two options — the import summary counts
+  (`bfmt_legacy_import`) and the switches an add-on may store
+  (`bfmt_features`) — and keeps every tray and the record of imported Lite
+  rows (`bfmt_legacy_imported_ids`).
 
 ---
 
@@ -113,12 +150,14 @@ lives, and nothing to migrate when you upgrade.
 | Record a tray: variety, size, seeded date | Yes | Yes |
 | Expected harvest date you type | Yes | Yes |
 | Tray list with status, sortable, paged | Yes | Yes |
+| Mark a tray harvested or failed | Yes, from Pro's tray screens, with the yield or the reason | Yes, from the tray list |
+| Undo a harvest or a failure | A harvest, by clearing its date; a failure cannot be undone in Pro 1.4.0 | Yes — **Mark growing** |
 | Trays kept on uninstall | Yes | Yes |
 | **Expected harvest worked out from the variety** | Yes | — |
-| **Soak, weight on, darkness lifted, germination milestones** | Yes | — |
+| **Soak, weight on, germination, darkness lifted milestones** | Yes | — |
 | **Seven-state grow cycle instead of three** | Yes | — |
 | **Seed variety library** — days to harvest, soak, seed rate, bag price | Yes | — |
-| **Yield and germination rates per variety** | Yes | — |
+| **Average yield, harvested and failed counts per variety** | Yes | — |
 | **Cost per tray, and expense tracking** | Yes | — |
 | **Rack and location grid** | Yes | — |
 | **Harvest planning, backwards from a delivery date** | Yes | — |
@@ -146,13 +185,14 @@ and which are overdue, instead of walking the racks to find out.
 
 **You cannot tell which varieties pay.** Without seed weight, yield weight and
 cost per tray, every crop looks equally worthwhile. Pro records what went in and
-what came out, and reports yield, germination rate and cost per gram by variety.
+what came out, and reports average yield, harvested and failed counts and
+average cost per tray by variety.
 That is the number that decides what you sow next season.
 
 **Nobody else can log a tray.** This plugin is a wp-admin screen, so anyone who
 touches it needs a WordPress account with editing rights. Pro adds a Farm Worker
 role and five front-end shortcodes, so staff log trays and milestones from a
-phone in the grow room without ever seeing wp-admin.
+phone in the grow room without needing wp-admin.
 
 **You are remembering where everything is.** Pro's rack and location grid tracks
 occupancy across shelves and slots, blocks a slot that is already full, and

@@ -185,12 +185,37 @@ final class TrayListTableTest extends TestCase {
 	 * the confirm attribute.
 	 */
 	public function test_translated_link_text_is_escaped(): void {
-		$GLOBALS['bfmt_filters']['gettext'] = static fn( string $t ): string => str_replace( 'Mark', '<b>"Mark', $t );
+		$GLOBALS['bfmt_filters']['gettext'] = static fn( string $t ): string => str_replace( [ 'Mark', 'Move' ], [ '<b>"Mark', '<b>"Move' ], $t );
 
 		$actions = $this->cell( 'row_actions_col' );
 
 		$this->assertStringNotContainsString( '<b>', $actions );
 		$this->assertStringContainsString( '&lt;b&gt;&quot;Mark harvested</a>', $actions );
 		$this->assertStringContainsString( 'aria-label="&lt;b&gt;&quot;Mark harvested:', $actions );
+		$this->assertStringContainsString( 'data-bfmt-confirm="&lt;b&gt;&quot;Move this tray to the trash?"', $actions );
+	}
+
+	public function test_ascending_order_also_breaks_ties_ascending(): void {
+		bfmt_test_request( [ 'order' => 'asc' ] );
+
+		( new BFMT_Tray_List_Table() )->prepare_items();
+
+		$this->assertSame( [ 'unseeded' => 'ASC', 'ID' => 'ASC' ], $GLOBALS['bfmt_query_args']['orderby'] );
+	}
+
+	public function test_the_label_leaves_out_a_missing_date_and_names_a_tray_with_no_variety(): void {
+		$GLOBALS['bfmt_terms'][7] = [ (object) [ 'name' => 'Sunflower', 'term_id' => 1 ] ];
+		$this->assertStringContainsString( 'aria-label="Edit: Sunflower"', $this->cell( 'row_actions_col' ) );
+
+		$GLOBALS['bfmt_terms'] = [];
+		update_post_meta( 7, '_mgtrack_seeding_date', '2026-09-24' );
+		$this->assertStringContainsString( 'aria-label="Edit: Tray 7, seeded 2026-09-24"', $this->cell( 'row_actions_col' ) );
+	}
+
+	public function test_a_tray_with_pro_records_offers_no_status_links(): void {
+		update_post_meta( 7, '_mgtrack_yield_weight', '120' );
+
+		$this->assertSame( [], BFMT_Tray_List_Table::status_actions( 7 ) );
+		$this->assertStringNotContainsString( 'Mark ', $this->cell( 'row_actions_col' ) );
 	}
 }

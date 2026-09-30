@@ -148,8 +148,8 @@ class BFMT_Tray_Admin {
 		// BFMT_Tray_List_Table::status_actions()); a crafted or stale link is
 		// refused here too, so Pro's harvest, failure and rack records cannot
 		// be bypassed.
-		if ( BFMT_Pro_Upsell::pro_is_active() ) {
-			self::redirect_with_notice( [ 'error', __( 'With Microgreen Tracker Pro active, record harvests and failures from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
+		if ( BFMT_Pro_Upsell::pro_is_active() || BFMT_Status::has_pro_record( $tray_id ) ) {
+			self::redirect_with_notice( [ 'error', __( 'This tray has Microgreen Tracker Pro records. Record its harvest or failure from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
 		}
 
 		$done = match ( $action ) {
@@ -259,6 +259,36 @@ class BFMT_Tray_Admin {
 		);
 	}
 
+	/**
+	 * Say so when Lite rows could not be imported.
+	 *
+	 * The FAQ tells growers to delete Lite once this plugin is active, and
+	 * deleting Lite drops its table. A row that failed to import would go with
+	 * it, so the screen says how many failed and to keep Lite until then.
+	 */
+	private static function show_import_warning(): void {
+		$result = get_option( BFMT_Migrator::DONE_OPTION );
+		$failed = is_array( $result ) ? (int) ( $result['failed'] ?? 0 ) : 0;
+
+		if ( $failed < 1 ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			esc_html( sprintf(
+				/* translators: %d: number of rows */
+				_n(
+					'%d tray from Microgreen Tracker Lite could not be imported. Keep Lite installed: deleting it removes its table, and that tray with it.',
+					'%d trays from Microgreen Tracker Lite could not be imported. Keep Lite installed: deleting it removes its table, and those trays with it.',
+					$failed,
+					'bluefairy-microgreen-tracker'
+				),
+				$failed
+			) )
+		);
+	}
+
 	public static function render(): void {
 		self::guard();
 
@@ -269,6 +299,7 @@ class BFMT_Tray_Admin {
 
 		echo '<div class="wrap">';
 		self::show_notice();
+		self::show_import_warning();
 
 		if ( 'add' === $action || ( 'edit' === $action && BFMT_Tray::is_tray( $tray_id ) ) ) {
 			self::render_form( 'edit' === $action ? $tray_id : 0 );

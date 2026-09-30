@@ -124,6 +124,24 @@ class BFMT_Status {
 	}
 
 	/**
+	 * Whether Pro has recorded more about this tray than a status.
+	 *
+	 * A harvest with a yield, a failure with a reason, or a rack slot. The free
+	 * plugin's one-click status actions would leave those behind — a reopened
+	 * tray keeping an old yield, or two trays in one slot — so they are not
+	 * offered on such a tray even when Pro is deactivated.
+	 */
+	public static function has_pro_record( int $tray_id ): bool {
+		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_failed_reason', '_mgtrack_sale_price' ] as $key ) {
+			if ( '' !== (string) get_post_meta( $tray_id, $key, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Whether a tray has reached either end of its cycle.
 	 */
 	public static function is_finished( int $tray_id ): bool {

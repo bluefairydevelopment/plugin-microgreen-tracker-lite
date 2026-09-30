@@ -94,12 +94,22 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 	private function actions_for( int $tray_id ): string {
 		// Each row repeats the same link words, so each link also names its
 		// tray for a screen reader: "Mark harvested: Sunflower, seeded 2026-09-24".
-		$tray = sprintf(
-			/* translators: 1: variety, 2: seeded date */
-			__( '%1$s, seeded %2$s', 'bluefairy-microgreen-tracker' ),
-			BFMT_Tray::variety( $tray_id ),
-			(string) BFMT_Tray::get( $tray_id, 'seeding_date' )
-		);
+		$variety = BFMT_Tray::variety( $tray_id );
+		$seeded  = (string) BFMT_Tray::get( $tray_id, 'seeding_date' );
+
+		if ( '' === $variety ) {
+			/* translators: %d: tray id */
+			$variety = sprintf( __( 'Tray %d', 'bluefairy-microgreen-tracker' ), $tray_id );
+		}
+
+		$tray = '' === $seeded
+			? $variety
+			: sprintf(
+				/* translators: 1: variety, 2: seeded date */
+				__( '%1$s, seeded %2$s', 'bluefairy-microgreen-tracker' ),
+				$variety,
+				$seeded
+			);
 
 		$link = static fn( string $url, string $label, string $attrs = '' ): string => sprintf(
 			'<a href="%s" aria-label="%s"%s>%s</a>',
@@ -144,7 +154,7 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 	 * @return array<string, string> action => label
 	 */
 	public static function status_actions( int $tray_id ): array {
-		if ( BFMT_Pro_Upsell::pro_is_active() ) {
+		if ( BFMT_Pro_Upsell::pro_is_active() || BFMT_Status::has_pro_record( $tray_id ) ) {
 			return [];
 		}
 

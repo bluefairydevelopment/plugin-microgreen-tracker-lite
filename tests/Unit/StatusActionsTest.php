@@ -119,4 +119,15 @@ final class StatusActionsTest extends TestCase {
 		$this->assertTrue( BFMT_Status::is_finished( 4 ) );
 		$this->assertFalse( BFMT_Status::is_finished( 5 ) );
 	}
+
+	public function test_a_tray_with_pro_records_is_recognised(): void {
+		$this->assertFalse( BFMT_Status::has_pro_record( 1 ) );
+
+		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_failed_reason', '_mgtrack_sale_price' ] as $key ) {
+			$GLOBALS['bfmt_meta'] = [];
+			update_post_meta( 1, $key, 'x' );
+
+			$this->assertTrue( BFMT_Status::has_pro_record( 1 ), $key );
+		}
+	}
 }

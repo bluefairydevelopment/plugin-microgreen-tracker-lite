@@ -225,4 +225,14 @@ final class TrayTest extends TestCase {
 
 		$this->assertSame( [], $hits );
 	}
+
+	/**
+	 * The edit form marks Seeded as required; blanking it on edit is refused.
+	 */
+	public function test_update_refuses_a_blanked_seeded_date(): void {
+		$result = BFMT_Tray::update( 1, [ 'seeding_date' => '  ', 'tray_size' => 'Half' ] );
+
+		$this->assertSame( 'bfmt_seeding_date', $result->get_error_code() );
+		$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ) );
+	}
 }

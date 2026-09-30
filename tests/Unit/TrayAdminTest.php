@@ -359,4 +359,38 @@ final class TrayAdminTest extends TestCase {
 			BFMT_Tray_Admin::harvest_help( false )
 		);
 	}
+
+	/**
+	 * Pro deactivated but its records present: the one-click actions would
+	 * leave a stale yield or double-book a rack slot, so they are refused.
+	 */
+	public function test_a_status_action_on_a_tray_with_pro_records_is_refused(): void {
+		foreach ( [ 'harvest', 'fail', 'reopen' ] as $action ) {
+			bfmt_test_reset();
+			$GLOBALS['bfmt_types'][1] = 'mgtrack_tray';
+			$GLOBALS['bfmt_caps']     = [ 'edit_posts' => true ];
+			$GLOBALS['bfmt_meta'][1]  = [ '_mgtrack_location' => '1A3', '_mgtrack_harvest_date' => '2026-09-01' ];
+
+			$this->handle( [ 'page' => 'bfmt-trays', 'action' => $action, 'tray_id' => '1' ] );
+
+			$this->assertSame( 'error', $this->notice()[0], $action );
+			$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ), $action );
+			$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ), $action );
+		}
+	}
+
+	public function test_failed_lite_rows_are_announced_with_a_warning(): void {
+		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 4, 'skipped' => 0, 'failed' => 2 ];
+
+		$html = $this->render();
+
+		$this->assertStringContainsString( '<div class="notice notice-warning"><p>2 trays from Microgreen Tracker Lite could not be imported. Keep Lite installed', $html );
+	}
+
+	public function test_no_warning_when_every_lite_row_imported_or_there_was_no_import(): void {
+		$this->assertStringNotContainsString( 'notice-warning', $this->render() );
+
+		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 4, 'skipped' => 1, 'failed' => 0 ];
+		$this->assertStringNotContainsString( 'notice-warning', $this->render() );
+	}
 }

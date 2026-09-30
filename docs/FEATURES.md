@@ -82,8 +82,13 @@ table. Activation imports its rows into the shared record:
 - statuses become the milestone that produced them, since status is derived here;
 - the old table is left in place. Nothing is dropped.
 
-**Check the import ran:** `wp option get bfmt_legacy_import` reports how many
-rows were brought across, skipped and failed.
+If any row could not be imported, the Microgreens screen says how many and to
+keep Lite installed — deleting Lite would take those rows with its table.
+`wp option get bfmt_legacy_import` reports the counts: brought across, skipped
+and failed.
+
+A finished Lite row is given the date it was last updated in Lite as its
+harvest or failure date, since Lite recorded no finish date of its own.
 
 ## Extension points
 
@@ -120,7 +125,8 @@ lives, and nothing to migrate when you upgrade.
 | Record a tray: variety, size, seeded date | Yes | Yes |
 | Expected harvest date you type | Yes | Yes |
 | Tray list with status, sortable, paged | Yes | Yes |
-| Mark a tray harvested or failed, and undo it | Yes | Yes |
+| Mark a tray harvested or failed | Yes, from Pro's tray screens, with the yield or the reason | Yes, from the tray list |
+| Undo a harvest or a failure | A harvest, by clearing its date; a failure cannot be undone in Pro 1.4.0 | Yes — **Mark growing** |
 | Trays kept on uninstall | Yes | Yes |
 | **Expected harvest worked out from the variety** | Yes | — |
 | **Soak, weight on, germination, darkness lifted milestones** | Yes | — |

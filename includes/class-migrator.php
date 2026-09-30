@@ -83,10 +83,15 @@ class BFMT_Migrator {
 				continue;
 			}
 
+			$seeded = (string) $row->seeded_date;
+
+			// WordPress runs MySQL without NO_ZERO_DATE, so Lite stored a blank
+			// or impossible date as 0000-00-00. The expected date is optional:
+			// an unreadable one is dropped rather than failing the whole row.
 			$tray_id = BFMT_Tray::create( [
 				'variety'               => (string) $row->variety,
-				'seeding_date'          => (string) $row->seeded_date,
-				'expected_harvest_date' => (string) ( $row->expected_harvest_date ?? '' ),
+				'seeding_date'          => $seeded,
+				'expected_harvest_date' => self::readable( (string) ( $row->expected_harvest_date ?? '' ) ),
 				'tray_size'             => (string) $row->tray_size,
 			] );
 
@@ -97,11 +102,11 @@ class BFMT_Migrator {
 
 			// The old table stored a status; this model derives one, so the
 			// status is expressed as the milestone that produced it.
+			// Both are stored as dates, the form Pro reads them in.
 			if ( 'harvested' === $row->status ) {
-				update_post_meta( $tray_id, '_mgtrack_harvest_date', (string) ( $row->expected_harvest_date ?: $row->seeded_date ) );
+				update_post_meta( $tray_id, '_mgtrack_harvest_date', self::finished_on( $row ) );
 			} elseif ( 'failed' === $row->status ) {
-				// A date, not a flag: Pro reads the failure as the day it happened.
-				update_post_meta( $tray_id, '_mgtrack_failed', (string) ( $row->expected_harvest_date ?: $row->seeded_date ) );
+				update_post_meta( $tray_id, '_mgtrack_failed', self::finished_on( $row ) );
 			}
 
 			update_post_meta( $tray_id, self::SOURCE_KEY, (int) $row->id );
@@ -111,6 +116,44 @@ class BFMT_Migrator {
 		update_option( self::DONE_OPTION, $result, false );
 
 		return $result;
+	}
+
+	/**
+	 * The date if it is a real one, otherwise ''.
+	 */
+	private static function readable( string $date ): string {
+		return BFMT_Tray::is_date( $date ) ? $date : '';
+	}
+
+	/**
+	 * The day a finished Lite row finished, as best the row can say.
+	 *
+	 * Lite recorded no finish date. Its updated_at changed when the row was
+	 * last edited — usually the status change — so it is the closest record;
+	 * the expected date is the fallback, then the seeded date. The answer is
+	 * kept between the seeded date and today, so an import never records a
+	 * tray finishing before it was sown or in the future.
+	 */
+	public static function finished_on( object $row ): string {
+		$seeded = (string) $row->seeded_date;
+		$today  = current_time( 'Y-m-d' );
+
+		$candidates = [
+			substr( (string) ( $row->updated_at ?? '' ), 0, 10 ),
+			(string) ( $row->expected_harvest_date ?? '' ),
+		];
+
+		$date = $seeded;
+
+		foreach ( $candidates as $candidate ) {
+			if ( BFMT_Tray::is_date( $candidate ) ) {
+				$date = $candidate;
+				break;
+			}
+		}
+
+		// Plain string comparison is date order for Y-m-d.
+		return max( $seeded, min( $date, $today ) );
 	}
 
 	private static function already_imported( int $legacy_id ): bool {

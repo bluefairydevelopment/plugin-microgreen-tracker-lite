@@ -240,7 +240,9 @@ class BFMT_Tray {
 			return new WP_Error( 'bfmt_variety', __( 'A variety is required.', 'bluefairy-microgreen-tracker' ) );
 		}
 
-		if ( $creating && '' === trim( (string) ( $fields['seeding_date'] ?? '' ) ) ) {
+		// Required on create, and cannot be blanked on edit: the form marks it
+		// Required on both.
+		if ( ( $creating || array_key_exists( 'seeding_date', $fields ) ) && '' === trim( (string) ( $fields['seeding_date'] ?? '' ) ) ) {
 			return new WP_Error( 'bfmt_seeding_date', __( 'A seeded date is required.', 'bluefairy-microgreen-tracker' ) );
 		}
 

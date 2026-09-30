@@ -247,4 +247,50 @@ final class MigratorTest extends TestCase {
 		$this->assertSame( [ 'imported' => 0, 'skipped' => 0, 'failed' => 1 ], BFMT_Migrator::run() );
 		$this->assertSame( [], bfmt_test_calls( 'wp_insert_post' ) );
 	}
+
+	/**
+	 * WordPress runs MySQL without NO_ZERO_DATE, so Lite stored a blank or
+	 * impossible expected date as 0000-00-00. The row still imports; only the
+	 * optional date is dropped.
+	 */
+	public function test_a_zero_expected_date_does_not_lose_the_row(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->rows        = [ (object) [ 'id' => 5, 'variety' => 'Kale', 'seeded_date' => '2026-02-01', 'expected_harvest_date' => '0000-00-00', 'tray_size' => '', 'status' => 'active' ] ];
+
+		$this->assertSame( [ 'imported' => 1, 'skipped' => 0, 'failed' => 0 ], BFMT_Migrator::run() );
+		$this->assertSame( '', $GLOBALS['bfmt_meta'][100]['_mgtrack_expected_harvest_date'] );
+	}
+
+	/**
+	 * Lite's updated_at changed when the status did, so it is the best record
+	 * of when a tray finished — ahead of the expected date.
+	 */
+	public function test_a_finished_row_uses_its_last_update_as_the_finish_date(): void {
+		$row = (object) [ 'seeded_date' => '2026-02-01', 'expected_harvest_date' => '2026-02-10', 'updated_at' => '2026-02-12 08:30:00' ];
+
+		$this->assertSame( '2026-02-12', BFMT_Migrator::finished_on( $row ) );
+	}
+
+	public function test_without_an_update_time_the_expected_date_then_the_seeded_date_is_used(): void {
+		$this->assertSame( '2026-02-10', BFMT_Migrator::finished_on( (object) [ 'seeded_date' => '2026-02-01', 'expected_harvest_date' => '2026-02-10', 'updated_at' => '0000-00-00 00:00:00' ] ) );
+		$this->assertSame( '2026-02-01', BFMT_Migrator::finished_on( (object) [ 'seeded_date' => '2026-02-01', 'expected_harvest_date' => null ] ) );
+	}
+
+	/**
+	 * Never before it was sown, never in the future (today is 2026-09-30 in the
+	 * stubs).
+	 */
+	public function test_the_finish_date_is_kept_between_sowing_and_today(): void {
+		$this->assertSame( '2026-09-30', BFMT_Migrator::finished_on( (object) [ 'seeded_date' => '2026-09-01', 'expected_harvest_date' => '2027-01-01', 'updated_at' => '' ] ) );
+		$this->assertSame( '2026-09-01', BFMT_Migrator::finished_on( (object) [ 'seeded_date' => '2026-09-01', 'expected_harvest_date' => '', 'updated_at' => '2026-08-01 00:00:00' ] ) );
+	}
+
+	public function test_a_failed_row_with_an_expected_date_records_its_update_day(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->rows        = [ (object) [ 'id' => 6, 'variety' => 'Pea', 'seeded_date' => '2026-03-01', 'expected_harvest_date' => '2026-03-10', 'updated_at' => '2026-03-05 10:00:00', 'tray_size' => '', 'status' => 'failed' ] ];
+
+		BFMT_Migrator::run();
+
+		$this->assertSame( '2026-03-05', $GLOBALS['bfmt_meta'][100]['_mgtrack_failed'] );
+	}
 }

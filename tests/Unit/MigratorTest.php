@@ -215,7 +215,8 @@ final class MigratorTest extends TestCase {
 
 		$this->assertSame( '2026-01-10', $GLOBALS['bfmt_meta'][ $kale ]['_mgtrack_harvest_date'] );
 		$this->assertArrayNotHasKey( '_mgtrack_failed', $GLOBALS['bfmt_meta'][ $kale ] );
-		// A date, as Pro stores it: the expected date, else the seeded date.
+		// A date, as Pro stores it. No updated_at here, so the expected date,
+		// else the seeded date.
 		$this->assertSame( '2026-01-03', $GLOBALS['bfmt_meta'][ $pea ]['_mgtrack_failed'] );
 		$this->assertArrayNotHasKey( '_mgtrack_harvest_date', $GLOBALS['bfmt_meta'][ $pea ] );
 		$this->assertArrayNotHasKey( '_mgtrack_harvest_date', $GLOBALS['bfmt_meta'][ $radish ] );
@@ -292,5 +293,31 @@ final class MigratorTest extends TestCase {
 		BFMT_Migrator::run();
 
 		$this->assertSame( '2026-03-05', $GLOBALS['bfmt_meta'][100]['_mgtrack_failed'] );
+	}
+
+	public function test_a_seeded_date_mistyped_into_the_future_still_finishes_no_later_than_today(): void {
+		$this->assertSame( '2026-09-30', BFMT_Migrator::finished_on( (object) [ 'seeded_date' => '2027-03-01', 'expected_harvest_date' => '', 'updated_at' => '' ] ) );
+	}
+
+	/**
+	 * A row entered already finished has updated_at = created_at, the day it
+	 * was typed in; the expected date says more about when it finished.
+	 */
+	public function test_an_update_on_the_creation_day_defers_to_the_expected_date(): void {
+		$row = (object) [ 'seeded_date' => '2026-02-01', 'expected_harvest_date' => '2026-02-10', 'created_at' => '2026-05-01 09:00:00', 'updated_at' => '2026-05-01 09:00:00' ];
+
+		$this->assertSame( '2026-02-10', BFMT_Migrator::finished_on( $row ) );
+	}
+
+	public function test_every_lite_field_reaches_the_tray(): void {
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->rows        = [ (object) [ 'id' => 8, 'variety' => 'Red Cabbage', 'seeded_date' => '2026-04-01', 'expected_harvest_date' => '2026-04-11', 'tray_size' => 'Half tray', 'status' => 'active' ] ];
+
+		BFMT_Migrator::run();
+
+		$this->assertSame( [ 100, 'Red Cabbage', 'mgtrack_seed', false ], bfmt_test_calls( 'wp_set_object_terms' )[0] );
+		$this->assertSame( '2026-04-01', $GLOBALS['bfmt_meta'][100]['_mgtrack_seeding_date'] );
+		$this->assertSame( '2026-04-11', $GLOBALS['bfmt_meta'][100]['_mgtrack_expected_harvest_date'] );
+		$this->assertSame( 'Half tray', $GLOBALS['bfmt_meta'][100]['_mgtrack_tray_size'] );
 	}
 }

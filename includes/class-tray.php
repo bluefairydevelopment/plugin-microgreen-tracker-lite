@@ -185,6 +185,15 @@ class BFMT_Tray {
 			return new WP_Error( 'bfmt_no_tray', __( 'That tray no longer exists.', 'bluefairy-microgreen-tracker' ) );
 		}
 
+		// A tray started in Pro with a soak has no seeded date yet. Saving the
+		// form with Seeded left blank keeps it that way instead of refusing the
+		// whole edit; blanking a date the tray already has is still refused.
+		if ( array_key_exists( 'seeding_date', $fields )
+			&& '' === trim( (string) $fields['seeding_date'] )
+			&& '' === (string) self::get( $tray_id, 'seeding_date' ) ) {
+			unset( $fields['seeding_date'] );
+		}
+
 		$check = self::validate( $fields, false );
 
 		if ( is_wp_error( $check ) ) {
@@ -240,8 +249,9 @@ class BFMT_Tray {
 			return new WP_Error( 'bfmt_variety', __( 'A variety is required.', 'bluefairy-microgreen-tracker' ) );
 		}
 
-		// Required on create, and cannot be blanked on edit: the form marks it
-		// Required on both.
+		// Required on create. On edit, update() has already dropped a blank
+		// for a tray that never had a date, so a blank reaching here would
+		// erase a seeded date the tray has.
 		if ( ( $creating || array_key_exists( 'seeding_date', $fields ) ) && '' === trim( (string) ( $fields['seeding_date'] ?? '' ) ) ) {
 			return new WP_Error( 'bfmt_seeding_date', __( 'A seeded date is required.', 'bluefairy-microgreen-tracker' ) );
 		}

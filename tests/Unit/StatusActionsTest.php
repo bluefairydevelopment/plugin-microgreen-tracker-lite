@@ -123,11 +123,15 @@ final class StatusActionsTest extends TestCase {
 	public function test_a_tray_with_pro_records_is_recognised(): void {
 		$this->assertFalse( BFMT_Status::has_pro_record( 1 ) );
 
-		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_failed_reason', '_mgtrack_sale_price' ] as $key ) {
-			$GLOBALS['bfmt_meta'] = [];
-			update_post_meta( 1, $key, 'x' );
+		// An EMPTY value still counts: Pro writes a blank failure reason, and a
+		// zero yield as '0'.
+		foreach ( [ '_mgtrack_location', '_mgtrack_yield_weight', '_mgtrack_sale_price', '_mgtrack_failed_reason', '_mgtrack_harvest_date_by', '_mgtrack_failed_by' ] as $key ) {
+			$GLOBALS['bfmt_meta'] = [ 1 => [ $key => '' ] ];
 
 			$this->assertTrue( BFMT_Status::has_pro_record( 1 ), $key );
 		}
+
+		$GLOBALS['bfmt_meta'] = [ 1 => [ '_mgtrack_yield_weight' => '0' ] ];
+		$this->assertTrue( BFMT_Status::has_pro_record( 1 ) );
 	}
 }

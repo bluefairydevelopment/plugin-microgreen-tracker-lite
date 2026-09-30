@@ -48,7 +48,9 @@ status column to fall out of step with the milestone that actually happened.
 
 The three row links are hidden while Microgreen Tracker Pro is active: Pro
 records a harvest with its yield and a failure with its reason, from its own
-tray screens. Both are stored as dates, which is how Pro reads them.
+tray screens. With Pro deactivated, a tray Pro finished is not offered
+**Mark growing** — reopening it here would leave Pro's yield or rack slot
+behind. Harvest and failure are stored as dates, which is how Pro reads them.
 
 Harvested beats failed: a tray that was cut is not also a failure, whichever
 order the two were recorded in.
@@ -82,8 +84,10 @@ table. Activation imports its rows into the shared record:
 - statuses become the milestone that produced them, since status is derived here;
 - the old table is left in place. Nothing is dropped.
 
-If any row could not be imported, the Microgreens screen says how many and to
-keep Lite installed — deleting Lite would take those rows with its table.
+While any Lite row is still waiting to be imported — usually because Lite has
+no seeded date for it — the Microgreens screen says how many. Keep Lite
+installed, fix the date in Lite, then deactivate and reactivate this plugin.
+Deleting Lite would take those rows with its table.
 `wp option get bfmt_legacy_import` reports the counts: brought across, skipped
 and failed.
 

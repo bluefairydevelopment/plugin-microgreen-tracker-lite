@@ -148,19 +148,26 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 	 * finishes or comes back. A one-click status change here would skip all of
 	 * that, so with Pro on, trays are finished from Pro's own screens.
 	 *
-	 * Otherwise a growing tray can be finished either way, and a finished one
-	 * put back — the undo for a mis-tap.
+	 * Otherwise a growing tray can be finished either way — finishing frees
+	 * any rack slot in Pro's own reckoning, so it corrupts nothing. A finished
+	 * tray can be put back (the undo for a mis-tap) unless Pro finished it:
+	 * reopening would keep Pro's yield or reason and could put two trays in
+	 * one slot.
 	 *
 	 * @return array<string, string> action => label
 	 */
 	public static function status_actions( int $tray_id ): array {
-		if ( BFMT_Pro_Upsell::pro_is_active() || BFMT_Status::has_pro_record( $tray_id ) ) {
+		if ( BFMT_Pro_Upsell::pro_is_active() ) {
 			return [];
 		}
 
-		return BFMT_Status::is_finished( $tray_id )
-			? [ 'reopen' => __( 'Mark growing', 'bluefairy-microgreen-tracker' ) ]
-			: [
+		if ( BFMT_Status::is_finished( $tray_id ) ) {
+			return BFMT_Status::has_pro_record( $tray_id )
+				? []
+				: [ 'reopen' => __( 'Mark growing', 'bluefairy-microgreen-tracker' ) ];
+		}
+
+		return [
 				'harvest' => __( 'Mark harvested', 'bluefairy-microgreen-tracker' ),
 				'fail'    => __( 'Mark failed', 'bluefairy-microgreen-tracker' ),
 			];

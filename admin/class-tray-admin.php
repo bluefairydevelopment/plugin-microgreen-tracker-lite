@@ -144,12 +144,14 @@ class BFMT_Tray_Admin {
 
 		check_admin_referer( 'bfmt_' . $action . '_tray_' . $tray_id );
 
-		// The list hides these while Pro is active (see
-		// BFMT_Tray_List_Table::status_actions()); a crafted or stale link is
-		// refused here too, so Pro's harvest, failure and rack records cannot
-		// be bypassed.
-		if ( BFMT_Pro_Upsell::pro_is_active() || BFMT_Status::has_pro_record( $tray_id ) ) {
-			self::redirect_with_notice( [ 'error', __( 'This tray has Microgreen Tracker Pro records. Record its harvest or failure from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
+		// The list only offers what BFMT_Tray_List_Table::status_actions()
+		// allows; a crafted or stale link is held to the same rule here.
+		if ( BFMT_Pro_Upsell::pro_is_active() ) {
+			self::redirect_with_notice( [ 'error', __( 'With Microgreen Tracker Pro active, record harvests and failures from Pro\'s tray screens.', 'bluefairy-microgreen-tracker' ) ] );
+		}
+
+		if ( 'reopen' === $action && BFMT_Status::has_pro_record( $tray_id ) ) {
+			self::redirect_with_notice( [ 'error', __( 'This tray was finished in Microgreen Tracker Pro, with records this screen cannot undo. Reactivate Pro to change it.', 'bluefairy-microgreen-tracker' ) ] );
 		}
 
 		$done = match ( $action ) {
@@ -260,17 +262,17 @@ class BFMT_Tray_Admin {
 	}
 
 	/**
-	 * Say so when Lite rows could not be imported.
+	 * Say so while Lite rows are still waiting to be imported.
 	 *
 	 * The FAQ tells growers to delete Lite once this plugin is active, and
-	 * deleting Lite drops its table. A row that failed to import would go with
-	 * it, so the screen says how many failed and to keep Lite until then.
+	 * deleting Lite drops its table with any row not yet brought across. The
+	 * count is read live from Lite's table, so the notice goes away by itself
+	 * once the rows are imported, and never shows once the table is gone.
 	 */
 	private static function show_import_warning(): void {
-		$result = get_option( BFMT_Migrator::DONE_OPTION );
-		$failed = is_array( $result ) ? (int) ( $result['failed'] ?? 0 ) : 0;
+		$waiting = BFMT_Migrator::pending();
 
-		if ( $failed < 1 ) {
+		if ( $waiting < 1 ) {
 			return;
 		}
 
@@ -279,12 +281,12 @@ class BFMT_Tray_Admin {
 			esc_html( sprintf(
 				/* translators: %d: number of rows */
 				_n(
-					'%d tray from Microgreen Tracker Lite could not be imported. Keep Lite installed: deleting it removes its table, and that tray with it.',
-					'%d trays from Microgreen Tracker Lite could not be imported. Keep Lite installed: deleting it removes its table, and those trays with it.',
-					$failed,
+					'%d tray from Microgreen Tracker Lite has not been imported, usually because its seeded date is missing. Keep Lite installed: deleting it removes that tray. Fix the date in Lite, then deactivate and reactivate this plugin to import it.',
+					'%d trays from Microgreen Tracker Lite have not been imported, usually because a seeded date is missing. Keep Lite installed: deleting it removes those trays. Fix the dates in Lite, then deactivate and reactivate this plugin to import them.',
+					$waiting,
 					'bluefairy-microgreen-tracker'
 				),
-				$failed
+				$waiting
 			) )
 		);
 	}
@@ -356,7 +358,15 @@ class BFMT_Tray_Admin {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		self::field( 'variety', __( 'Variety', 'bluefairy-microgreen-tracker' ), $variety, 'text', __( 'Required.', 'bluefairy-microgreen-tracker' ) );
 		self::field( 'tray_size', __( 'Tray size', 'bluefairy-microgreen-tracker' ), $size, 'text', __( 'Whatever you call it — 10×20, half tray, and so on.', 'bluefairy-microgreen-tracker' ) );
-		self::field( 'seeding_date', __( 'Seeded', 'bluefairy-microgreen-tracker' ), $seeded, 'date', __( 'Required.', 'bluefairy-microgreen-tracker' ) );
+		self::field(
+			'seeding_date',
+			__( 'Seeded', 'bluefairy-microgreen-tracker' ),
+			$seeded,
+			'date',
+			( $editing && '' === $seeded )
+				? __( 'Not sown yet. Add the date once it is.', 'bluefairy-microgreen-tracker' )
+				: __( 'Required.', 'bluefairy-microgreen-tracker' )
+		);
 		self::field(
 			'expected_harvest_date',
 			__( 'Expected harvest', 'bluefairy-microgreen-tracker' ),

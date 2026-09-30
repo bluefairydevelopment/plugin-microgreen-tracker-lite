@@ -212,10 +212,17 @@ final class TrayListTableTest extends TestCase {
 		$this->assertStringContainsString( 'aria-label="Edit: Tray 7, seeded 2026-09-24"', $this->cell( 'row_actions_col' ) );
 	}
 
-	public function test_a_tray_with_pro_records_offers_no_status_links(): void {
-		update_post_meta( 7, '_mgtrack_yield_weight', '120' );
+	public function test_a_tray_pro_finished_offers_no_way_back(): void {
+		update_post_meta( 7, '_mgtrack_harvest_date', '2026-09-01' );
+		update_post_meta( 7, '_mgtrack_yield_weight', '0' );
 
 		$this->assertSame( [], BFMT_Tray_List_Table::status_actions( 7 ) );
 		$this->assertStringNotContainsString( 'Mark ', $this->cell( 'row_actions_col' ) );
+	}
+
+	public function test_a_growing_tray_with_a_rack_slot_can_still_be_finished(): void {
+		update_post_meta( 7, '_mgtrack_location', '1A3' );
+
+		$this->assertSame( [ 'harvest', 'fail' ], array_keys( BFMT_Tray_List_Table::status_actions( 7 ) ) );
 	}
 }

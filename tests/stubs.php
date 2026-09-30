@@ -33,6 +33,18 @@ final class BFMT_Test_Halt extends RuntimeException {
 	}
 }
 
+/**
+ * The default $wpdb: a site where Lite's table does not exist. Tests of the
+ * importer replace it with a double that answers.
+ */
+final class BFMT_Test_No_Legacy_Wpdb {
+	public string $prefix = 'wp_';
+	public function esc_like( $text ) { return $text; }
+	public function prepare( $query, ...$args ) { return $query; }
+	public function get_var( $query ) { return null; }
+	public function get_results( $query ) { return []; }
+}
+
 function bfmt_test_reset(): void {
 	$GLOBALS['bfmt_calls']        = [];
 	$GLOBALS['bfmt_meta']         = [];
@@ -50,6 +62,7 @@ function bfmt_test_reset(): void {
 	$GLOBALS['bfmt_query_result'] = [ 'posts' => [], 'found_posts' => 0, 'max_num_pages' => 0 ];
 	$GLOBALS['bfmt_statuses']     = [];
 	$GLOBALS['bfmt_nonce_ok']     = true;
+	$GLOBALS['wpdb']              = new BFMT_Test_No_Legacy_Wpdb();
 	$_GET = $_POST = $_REQUEST = [];
 }
 
@@ -182,6 +195,8 @@ function delete_post_meta( $id, $key ) {
 
 	return true;
 }
+
+function metadata_exists( $type, $id, $key ) { return array_key_exists( $key, $GLOBALS['bfmt_meta'][ $id ] ?? [] ); }
 
 function get_the_terms( $id, $taxonomy ) { return $GLOBALS['bfmt_terms'][ $id ] ?? false; }
 

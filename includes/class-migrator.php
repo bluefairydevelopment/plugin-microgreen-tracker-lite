@@ -129,17 +129,20 @@ class BFMT_Migrator {
 	 * The day a finished Lite row finished, as best the row can say.
 	 *
 	 * Lite recorded no finish date. Its updated_at changed when the row was
-	 * last edited — usually the status change — so it is the closest record;
-	 * the expected date is the fallback, then the seeded date. The answer is
-	 * kept between the seeded date and today, so an import never records a
-	 * tray finishing before it was sown or in the future.
+	 * last edited — usually the status change — so it is the closest record,
+	 * unless it is the day the row was created (a row entered already
+	 * finished), when the expected date says more. Then the seeded date. The
+	 * answer is kept between the seeded date and today: never before sowing,
+	 * never in the future, even if the seeded date itself was mistyped ahead.
 	 */
 	public static function finished_on( object $row ): string {
-		$seeded = (string) $row->seeded_date;
-		$today  = current_time( 'Y-m-d' );
+		$seeded  = (string) $row->seeded_date;
+		$today   = current_time( 'Y-m-d' );
+		$updated = substr( (string) ( $row->updated_at ?? '' ), 0, 10 );
+		$created = substr( (string) ( $row->created_at ?? '' ), 0, 10 );
 
 		$candidates = [
-			substr( (string) ( $row->updated_at ?? '' ), 0, 10 ),
+			$updated !== $created ? $updated : '',
 			(string) ( $row->expected_harvest_date ?? '' ),
 		];
 
@@ -152,8 +155,9 @@ class BFMT_Migrator {
 			}
 		}
 
-		// Plain string comparison is date order for Y-m-d.
-		return max( $seeded, min( $date, $today ) );
+		// Plain string comparison is date order for Y-m-d. Today is applied
+		// last, so it wins even over a seeded date in the future.
+		return min( max( $seeded, $date ), $today );
 	}
 
 	private static function already_imported( int $legacy_id ): bool {

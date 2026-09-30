@@ -229,10 +229,24 @@ final class TrayTest extends TestCase {
 	/**
 	 * The edit form marks Seeded as required; blanking it on edit is refused.
 	 */
-	public function test_update_refuses_a_blanked_seeded_date(): void {
+	public function test_update_refuses_to_erase_a_seeded_date(): void {
+		$GLOBALS['bfmt_meta'][1]['_mgtrack_seeding_date'] = '2026-09-01';
+
 		$result = BFMT_Tray::update( 1, [ 'seeding_date' => '  ', 'tray_size' => 'Half' ] );
 
 		$this->assertSame( 'bfmt_seeding_date', $result->get_error_code() );
 		$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ) );
+		$this->assertSame( '2026-09-01', $GLOBALS['bfmt_meta'][1]['_mgtrack_seeding_date'] );
+	}
+
+	/**
+	 * A Pro tray started with a soak has no seeded date. Editing its variety
+	 * or size must not force one on it — that would move Pro's milestones.
+	 */
+	public function test_a_tray_not_sown_yet_can_be_edited_without_a_seeded_date(): void {
+		$this->assertTrue( BFMT_Tray::update( 1, [ 'seeding_date' => '', 'tray_size' => 'Half' ] ) );
+
+		$this->assertSame( 'Half', $GLOBALS['bfmt_meta'][1]['_mgtrack_tray_size'] );
+		$this->assertArrayNotHasKey( '_mgtrack_seeding_date', $GLOBALS['bfmt_meta'][1] );
 	}
 }

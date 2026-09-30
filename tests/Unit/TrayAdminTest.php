@@ -361,36 +361,81 @@ final class TrayAdminTest extends TestCase {
 	}
 
 	/**
-	 * Pro deactivated but its records present: the one-click actions would
-	 * leave a stale yield or double-book a rack slot, so they are refused.
+	 * With Pro deactivated, a tray Pro finished cannot be reopened here:
+	 * that would keep Pro's yield or reason and could double-book its slot.
 	 */
-	public function test_a_status_action_on_a_tray_with_pro_records_is_refused(): void {
-		foreach ( [ 'harvest', 'fail', 'reopen' ] as $action ) {
-			bfmt_test_reset();
-			$GLOBALS['bfmt_types'][1] = 'mgtrack_tray';
-			$GLOBALS['bfmt_caps']     = [ 'edit_posts' => true ];
-			$GLOBALS['bfmt_meta'][1]  = [ '_mgtrack_location' => '1A3', '_mgtrack_harvest_date' => '2026-09-01' ];
+	public function test_reopening_a_tray_pro_finished_is_refused(): void {
+		$GLOBALS['bfmt_meta'][1] = [ '_mgtrack_location' => '1A3', '_mgtrack_harvest_date' => '2026-09-01', '_mgtrack_harvest_date_by' => '1' ];
 
-			$this->handle( [ 'page' => 'bfmt-trays', 'action' => $action, 'tray_id' => '1' ] );
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
 
-			$this->assertSame( 'error', $this->notice()[0], $action );
-			$this->assertSame( [], bfmt_test_calls( 'update_post_meta' ), $action );
-			$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ), $action );
-		}
+		$this->assertSame( 'error', $this->notice()[0] );
+		$this->assertStringContainsString( 'Reactivate Pro to change it.', $this->notice()[1] );
+		$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ) );
+		$this->assertSame( 'harvested', BFMT_Status::get( 1 ) );
 	}
 
-	public function test_failed_lite_rows_are_announced_with_a_warning(): void {
-		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 4, 'skipped' => 0, 'failed' => 2 ];
+	/**
+	 * Finishing a growing tray that only has a rack slot corrupts nothing —
+	 * Pro frees the slot for any finished tray — so it is allowed.
+	 */
+	public function test_finishing_a_growing_tray_with_a_rack_slot_is_allowed(): void {
+		$GLOBALS['bfmt_meta'][1] = [ '_mgtrack_location' => '1A3' ];
+
+		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'harvest', 'tray_id' => '1' ] );
+
+		$this->assertSame( [ 'updated', 'Tray marked harvested.' ], $this->notice() );
+		$this->assertSame( 'harvested', BFMT_Status::get( 1 ) );
+	}
+
+	/**
+	 * @param list<mixed> $answers get_var() answers: the SHOW TABLES result,
+	 *                              then the row count.
+	 */
+	private function lite_table( array $answers, int $imported ): void {
+		$GLOBALS['wpdb'] = new class( $answers ) {
+			public string $prefix = 'wp_';
+			public function __construct( private array $answers ) {}
+			public function esc_like( $t ) { return $t; }
+			public function prepare( $q, ...$a ) { return $q; }
+			public function get_var( $q ) { return array_shift( $this->answers ); }
+			public function get_results( $q ) { return []; }
+		};
+		$GLOBALS['bfmt_posts_result'] = range( 1, $imported );
+	}
+
+	public function test_lite_rows_still_waiting_are_announced_with_the_way_to_import_them(): void {
+		$this->lite_table( [ 'wp_bfmtl_grows', '6' ], 4 );
 
 		$html = $this->render();
 
-		$this->assertStringContainsString( '<div class="notice notice-warning"><p>2 trays from Microgreen Tracker Lite could not be imported. Keep Lite installed', $html );
+		$this->assertStringContainsString( '<div class="notice notice-warning"><p>2 trays from Microgreen Tracker Lite have not been imported', $html );
+		$this->assertStringContainsString( 'deactivate and reactivate this plugin to import them.', $html );
 	}
 
-	public function test_no_warning_when_every_lite_row_imported_or_there_was_no_import(): void {
+	public function test_one_waiting_row_reads_in_the_singular(): void {
+		$this->lite_table( [ 'wp_bfmtl_grows', '5' ], 4 );
+
+		$this->assertStringContainsString( '1 tray from Microgreen Tracker Lite has not been imported', $this->render() );
+	}
+
+	/**
+	 * Read live, so it clears itself once the rows import, and never shows
+	 * once Lite's table is gone — whatever an old import recorded.
+	 */
+	public function test_no_warning_when_everything_is_imported_or_lite_is_gone(): void {
+		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 4, 'skipped' => 0, 'failed' => 2 ];
+
+		$this->lite_table( [ 'wp_bfmtl_grows', '4' ], 4 );
 		$this->assertStringNotContainsString( 'notice-warning', $this->render() );
 
-		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 4, 'skipped' => 1, 'failed' => 0 ];
+		$this->lite_table( [ null ], 0 );
 		$this->assertStringNotContainsString( 'notice-warning', $this->render() );
+	}
+
+	public function test_a_tray_not_sown_yet_says_so_on_the_edit_form(): void {
+		$html = $this->render( [ 'action' => 'edit', 'tray_id' => '1' ] );
+
+		$this->assertStringContainsString( 'Not sown yet. Add the date once it is.', $html );
 	}
 }

@@ -8,9 +8,10 @@
   reads, each behind a nonce keyed to the action and the tray. A repeat is
   success without moving the recorded date; a trashed tray is refused. Until
   now nothing in the free plugin could finish a tray.
-- The status links are hidden, and refused if requested, while Pro is active
-  or when a tray carries Pro records (a rack slot, yield, sale or failure
-  reason), so Pro being deactivated does not open that path either:
+- The status links are hidden, and refused if requested, while Pro is active.
+  With Pro off, Mark growing is not offered on a tray Pro finished (a rack
+  slot, yield, sale, failure reason or a Pro milestone stamp), since reopening
+  it would keep that data or double-book a slot:
   Pro records a harvest with its yield and sale, a failure with its reason,
   and frees rack slots, and a one-click change here would skip all of that.
 - Every row link carries an `aria-label` naming its tray.
@@ -30,9 +31,11 @@
   between the seeded date and today.
 - A Lite row whose optional expected date was `0000-00-00` (MySQL under
   WordPress runs without NO_ZERO_DATE) failed to import; the date is now
-  dropped and the row imported. The screen warns when any row failed, since
-  the FAQ tells growers to delete Lite.
-- `BFMT_Tray::update()` accepted a blank seeded date.
+  dropped and the row imported. While any Lite row is still waiting, the
+  screen says how many and how to bring them across, read live from Lite's
+  table, since the FAQ tells growers to delete Lite.
+- `BFMT_Tray::update()` could blank a tray's seeded date. A tray that never
+  had one (a Pro soak-started tray) can still be edited without one.
 - The Pro panel claimed a harvest date "from how much seed you sowed" and
   "germination rates"; Pro uses each variety's days to harvest and reports
   yield, harvested and failed counts and cost per tray. It now lists the daily

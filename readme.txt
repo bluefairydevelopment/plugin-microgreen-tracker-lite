@@ -23,7 +23,7 @@ If you grow microgreens you already keep this record somewhere — a notebook, a
 
 = What you see =
 
-Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. (With Microgreen Tracker Pro active, you record these from Pro's tray screens instead, where Pro also takes the yield or the reason.) Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
+Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. (With Microgreen Tracker Pro active, you record these from Pro's tray screens instead, where Pro also takes the yield or the reason. A tray Pro finished cannot be put back from here.) Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
 
 = What it does not do =
 
@@ -66,7 +66,7 @@ No, and the list is built to mean it: each page is a separate database query rat
 
 = I used Microgreen Tracker Lite 1.0.0, which kept its own table. =
 
-Activate this plugin **before** you delete Lite. Activation brings Lite's rows across into the shared record once — activating twice does not duplicate anything — and leaves Lite's table in place. Deleting Lite first removes that table, and with it the rows this plugin would have imported. If any row cannot be imported, the Microgreens screen says so — keep Lite installed until you have dealt with it.
+Activate this plugin **before** you delete Lite. Activation brings Lite's rows across into the shared record once — activating twice does not duplicate anything — and leaves Lite's table in place. Deleting Lite first removes that table, and with it the rows this plugin would have imported. If any row cannot be imported — usually because Lite has no seeded date for it — the Microgreens screen says so. Keep Lite installed, fix the date in Lite, then deactivate and reactivate this plugin to bring it across.
 
 = Can my staff log trays without a WordPress login? =
 
@@ -88,9 +88,9 @@ No.
 * Fixed: the plugin stopped with a fatal error on PHP 8.1, the version it says it supports.
 * Fixed: "Move to Trash" chosen from the bulk-action menu below the list did nothing. Both menus work.
 * Fixed: a tray with no seeded date — one started with a soak in Pro — was missing from the list. It now appears — after the dated trays in the default newest-first order.
-* Fixed: trays imported from Lite as harvested or failed now record a date — the day the row was last updated in Lite — which Pro needs to show their days and cost.
-* Fixed: a Lite row with an unreadable expected harvest date was not imported at all. The row imports without that date, and the Microgreens screen now says if any row could not be imported.
-* Fixed: the edit form accepted a blank seeded date, though it is marked required.
+* Fixed: trays imported from Lite as harvested or failed are given a date — the day the row was last updated in Lite — which Pro needs to show their days and cost. (Trays imported by 1.1.0 keep what they were given.)
+* Fixed: a Lite row with an unreadable expected harvest date was not imported at all. The row imports without that date, and the Microgreens screen now says while any Lite row is still waiting to be imported.
+* Fixed: the edit form could erase a tray's seeded date. A tray not sown yet (started with a soak in Pro) can still be edited without one.
 * Fixed: the Microgreen Tracker Pro panel described features Pro does not have: the harvest date "from how much seed you sowed" (it uses each variety's days to harvest) and "germination rates" (Pro reports yield, harvested and failed counts, and cost per tray). The panel now also lists Pro's daily digest email.
 * Fixed: the edit form promised Pro would fill in a blank expected harvest date. Pro only does that when a tray is added.
 * Changed: the screen's styling and its "Move this tray to the trash?" prompt load as a stylesheet and a script on the Microgreens screen only, instead of being written into each row. Status colours an add-on supplies must be hex colours; any other value shows the neutral badge.

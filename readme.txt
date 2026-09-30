@@ -58,7 +58,7 @@ https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-
 
 = Will I lose my trays if I deactivate or uninstall? =
 
-No. Deactivating changes nothing, and uninstalling removes only this plugin's own settings. Your trays are your records; a plugin should not delete them because you removed it.
+No. Deactivating changes nothing, and uninstalling removes only this plugin's two options — its trays, and its record of which Lite rows it imported, stay. Your trays are your records; a plugin should not delete them because you removed it.
 
 = Is there a limit on how many trays I can log? =
 

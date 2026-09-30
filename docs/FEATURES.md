@@ -72,10 +72,12 @@ case, so "amaranth" files with "Amaranth" rather than after "Zucchini".
 
 ## Deleting
 
-A tray goes to the trash, from where WordPress restores it or empties it on
-its own schedule (a site that sets `EMPTY_TRASH_DAYS` to 0 has no trash, and
-deletes at once). Uninstalling removes only `bfmt_features` and
-`bfmt_legacy_import` — never a grower's records, nor the import record.
+A tray goes to the trash. WordPress empties the trash on its own schedule (a
+site that sets `EMPTY_TRASH_DAYS` to 0 has no trash, and deletes at once). To
+restore a tray, open `wp-admin/edit.php?post_type=mgtrack_tray&post_status=trash`
+— there is no link to it on the Microgreens screen. Uninstalling removes only
+`bfmt_features` and `bfmt_legacy_import` — never a grower's records, nor the
+record of imported Lite rows (`bfmt_legacy_imported_ids`).
 
 ## Coming from Microgreen Tracker Lite 1.0.0
 
@@ -90,8 +92,8 @@ table. Activation imports its rows into the shared record:
 While any Lite row is not in the tracker — usually because Lite has no seeded
 date for it, or it was added to Lite since — the Microgreens screen says how many. Keep Lite
 installed, fix the date in Lite, then deactivate and reactivate this plugin
-(with Pro active, deactivate Pro first — WordPress will not deactivate a plugin
-another active plugin requires).
+(with Pro active, deactivate Pro first — the Plugins screen does not offer
+Deactivate for a plugin another active plugin requires).
 Deleting Lite would take those rows with its table.
 `wp option get bfmt_legacy_import` reports the counts: brought across, skipped
 and failed.

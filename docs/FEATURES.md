@@ -86,8 +86,8 @@ table. Activation imports its rows into the shared record:
 - statuses become the milestone that produced them, since status is derived here;
 - the old table is left in place. Nothing is dropped.
 
-While any Lite row is still waiting to be imported — usually because Lite has
-no seeded date for it — the Microgreens screen says how many. Keep Lite
+While any Lite row is not in the tracker — usually because Lite has no seeded
+date for it — the Microgreens screen says how many. Keep Lite
 installed, fix the date in Lite, then deactivate and reactivate this plugin.
 Deleting Lite would take those rows with its table.
 `wp option get bfmt_legacy_import` reports the counts: brought across, skipped
@@ -101,10 +101,12 @@ day, so check the finish date in Pro after importing a fixed row.
 
 The import keeps its own record of which Lite rows it has brought across
 (`bfmt_legacy_imported_ids`), written row by row, so a tray trashed or deleted
-afterwards is not imported again and an import cut short does not repeat
-itself. Uninstalling keeps the record, as it keeps the trays. After an update
-from 1.1.0, which kept no record, it is rebuilt from the remaining trays and
-from the Lite rows 1.1.0 could have imported.
+afterwards is not imported again and an import cut short repeats at most the
+row it was on. Uninstalling keeps the record, as it keeps the trays. After an
+update from 1.1.0, which kept no record, it is rebuilt from the trays that
+remain; a Lite row whose tray was deleted under 1.1.0 is then shown as not in
+the tracker rather than guessed at, since a guess could lose a row that was
+never imported.
 
 ## Extension points
 

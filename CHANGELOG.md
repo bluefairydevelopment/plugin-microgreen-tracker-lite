@@ -36,9 +36,10 @@
   `bfmt_legacy_imported_ids`, written after each row so an interrupted import
   does not repeat, kept on uninstall, and counts rows still waiting by id, not
   by count. On the first read after an update from 1.1.0 the record is
-  rebuilt from existing trays (trash included) plus the Lite rows, up to the
-  highest id 1.1.0 imported, that 1.1.0's validation would have accepted —
-  so a tray deleted since is not brought back.
+  rebuilt from existing trays (trash included). A Lite row whose tray was
+  deleted for good under 1.1.0 is reported as not in the tracker, not guessed
+  to be imported: a wrong guess would lose a row silently, while a tray that
+  comes back can be trashed again.
 - A Lite row whose optional expected date was `0000-00-00` (MySQL under
   WordPress runs without NO_ZERO_DATE) failed to import; the date is now
   dropped and the row imported. While any Lite row is still waiting, the

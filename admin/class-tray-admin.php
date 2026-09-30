@@ -285,8 +285,8 @@ class BFMT_Tray_Admin {
 			esc_html( sprintf(
 				/* translators: %d: number of rows */
 				_n(
-					'%d tray from Microgreen Tracker Lite has not been imported, usually because its seeded date is missing. Keep Lite installed: deleting it removes that tray. Fix the date in Lite, then deactivate and reactivate this plugin to import it.',
-					'%d trays from Microgreen Tracker Lite have not been imported, usually because a seeded date is missing. Keep Lite installed: deleting it removes those trays. Fix the dates in Lite, then deactivate and reactivate this plugin to import them.',
+					'%d row in Microgreen Tracker Lite is not in this tracker. Either it could not be imported (usually a missing seeded date — fix it in Lite), or it was imported by version 1.1.0 and its tray was later deleted. Deactivating and reactivating this plugin imports it; trash the tray again if you did not want it. Keep Lite installed until then: deleting Lite removes the row.',
+					'%d rows in Microgreen Tracker Lite are not in this tracker. Either they could not be imported (usually a missing seeded date — fix them in Lite), or they were imported by version 1.1.0 and their trays were later deleted. Deactivating and reactivating this plugin imports them; trash any trays you did not want. Keep Lite installed until then: deleting Lite removes the rows.',
 					$waiting,
 					'bluefairy-microgreen-tracker'
 				),

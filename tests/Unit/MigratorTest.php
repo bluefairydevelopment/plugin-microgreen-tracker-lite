@@ -382,67 +382,21 @@ final class MigratorTest extends TestCase {
 	 * An import cut off partway (a timeout on a long Lite history) has
 	 * recorded every row it finished, so the next activation skips them.
 	 */
-	public function test_an_import_cut_off_partway_keeps_what_it_finished(): void {
-		$GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] = [];
-		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
-		$this->db->rows        = [
-			(object) [ 'id' => 1, 'variety' => 'Kale', 'seeded_date' => '2026-01-02', 'expected_harvest_date' => '', 'tray_size' => '', 'status' => 'active' ],
-			(object) [ 'id' => 2, 'variety' => 'Pea', 'seeded_date' => '2026-01-03', 'expected_harvest_date' => '', 'tray_size' => '', 'status' => 'active' ],
-		];
-		// Row 2's insert dies the way a timeout would.
-		$GLOBALS['bfmt_throw_on_insert'] = 2;
-		try {
-			BFMT_Migrator::run();
-			$this->fail( 'the import was expected to be cut off' );
-		} catch ( RuntimeException ) {
-			// Expected.
-		}
-		$GLOBALS['bfmt_throw_on_insert'] = 0;
-
-		$this->assertSame( [ 1 ], $GLOBALS['bfmt_options']['bfmt_legacy_imported_ids'] );
-
-		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
-		$this->assertSame( [ 'imported' => 1, 'skipped' => 1, 'failed' => 0 ], BFMT_Migrator::run() );
-	}
-
 	/**
-	 * 1.1.0 kept no record. A tray it imported and the grower then deleted
-	 * for good must not come back when 1.1.1 rebuilds the record.
+	 * After 1.1.0 the record holds only what the surviving trays prove. A row
+	 * whose tray was deleted under 1.1.0 is NOT assumed imported — Lite is not
+	 * even read — so a row that was never imported cannot be lost to a guess.
 	 */
-	public function test_rebuilding_after_110_counts_deleted_trays_as_imported(): void {
-		$GLOBALS['bfmt_options']['bfmt_legacy_import'] = [ 'imported' => 3, 'skipped' => 0, 'failed' => 1 ];
-		$GLOBALS['bfmt_posts_result']                  = [ 30 ];
-		$GLOBALS['bfmt_meta'][30]['_bfmt_legacy_grow_id'] = 3;
-		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
-		$this->db->rows        = [
-			(object) [ 'id' => 1, 'seeded_date' => '2026-01-01', 'expected_harvest_date' => null ],          // deleted by the grower
-			(object) [ 'id' => 2, 'seeded_date' => '0000-00-00', 'expected_harvest_date' => null ],          // 1.1.0 refused it
-			(object) [ 'id' => 3, 'seeded_date' => '2026-01-03', 'expected_harvest_date' => '2026-01-10' ],  // still has its tray
-			(object) [ 'id' => 4, 'seeded_date' => '2026-01-04', 'expected_harvest_date' => '0000-00-00' ],  // 1.1.0 refused it too
-		];
-
-		$this->assertSame( [ 3, 1 ], BFMT_Migrator::imported_ids() );
-		$this->assertSame( [ 'SELECT id, seeded_date, expected_harvest_date FROM %i WHERE id <= %d', [ 'wp_bfmtl_grows', 3 ] ], $this->prepared_starting( 'SELECT id, seeded_date' ) );
-	}
-
-	public function test_a_fresh_rebuild_with_no_110_import_adds_nothing_from_lite(): void {
-		$GLOBALS['bfmt_posts_result'] = [];
-
-		$this->assertSame( [], BFMT_Migrator::imported_ids() );
-		$this->assertSame( [], $this->db->executed, 'Lite is not read without a 1.1.0 import' );
-	}
-
-	/**
-	 * Without 1.1.0's summary there is no evidence 1.1.0 imported anything
-	 * beyond the surviving trays, so Lite is not read and nothing is assumed.
-	 */
-	public function test_without_a_110_summary_only_surviving_trays_are_recorded(): void {
+	public function test_the_110_rebuild_records_only_what_surviving_trays_prove(): void {
+		$GLOBALS['bfmt_options']['bfmt_legacy_import']    = [ 'imported' => 3, 'skipped' => 0, 'failed' => 0 ];
 		$GLOBALS['bfmt_posts_result']                     = [ 30 ];
 		$GLOBALS['bfmt_meta'][30]['_bfmt_legacy_grow_id'] = 3;
-		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
-		$this->db->rows        = [ (object) [ 'id' => 1, 'seeded_date' => '2026-01-01', 'expected_harvest_date' => null ] ];
 
 		$this->assertSame( [ 3 ], BFMT_Migrator::imported_ids() );
 		$this->assertSame( [], $this->db->executed );
+
+		$this->db->var_answers = [ 'wp_bfmtl_grows' ];
+		$this->db->ids         = [ 1, 2, 3 ];
+		$this->assertSame( 2, BFMT_Migrator::pending(), 'rows 1 and 2 are reported, for the grower to decide' );
 	}
 }

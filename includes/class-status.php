@@ -133,7 +133,7 @@ class BFMT_Status {
 	 *   stores the yield, sale and failure reason. Reopening here would leave
 	 *   those behind — an old yield counted again in Pro's reports.
 	 * - Its rack slot is taken: a finished tray frees its slot in Pro's
-	 *   reckoning. If another growing tray now occupies that slot, reopening
+	 *   reckoning. If another unfinished tray now occupies that slot, reopening
 	 *   would put two trays in one slot.
 	 *
 	 * A tray that only has a slot, finished here, can be put back while the
@@ -157,7 +157,7 @@ class BFMT_Status {
 	}
 
 	/**
-	 * Whether another growing tray occupies $slot — Pro's own occupancy rule.
+	 * Whether another unfinished tray occupies $slot — Pro's own occupancy rule.
 	 */
 	private static function slot_taken( string $slot, int $except ): bool {
 		return (bool) get_posts( [

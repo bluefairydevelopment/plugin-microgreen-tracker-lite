@@ -233,4 +233,12 @@ final class TrayListTableTest extends TestCase {
 
 		$this->assertSame( [ 'harvest', 'fail' ], array_keys( BFMT_Tray_List_Table::status_actions( 7 ) ) );
 	}
+
+	public function test_a_finished_tray_whose_slot_is_taken_offers_no_way_back(): void {
+		update_post_meta( 7, '_mgtrack_location', '1A3' );
+		update_post_meta( 7, '_mgtrack_failed', '2026-09-01' );
+		$GLOBALS['bfmt_posts_result'] = [ 2 ];
+
+		$this->assertSame( [], BFMT_Tray_List_Table::status_actions( 7 ) );
+	}
 }

@@ -398,7 +398,7 @@ final class TrayAdminTest extends TestCase {
 
 		$this->handle( [ 'page' => 'bfmt-trays', 'action' => 'reopen', 'tray_id' => '1' ] );
 
-		$this->assertStringContainsString( 'rack slot is now used by another growing tray', $this->notice()[1] );
+		$this->assertStringContainsString( 'rack slot is now used by another tray that is not finished', $this->notice()[1] );
 		$this->assertSame( 'failed', BFMT_Status::get( 1 ) );
 	}
 

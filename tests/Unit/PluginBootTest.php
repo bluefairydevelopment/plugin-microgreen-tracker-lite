@@ -160,9 +160,11 @@ final class PluginBootTest extends TestCase {
 		define( 'WP_UNINSTALL_PLUGIN', 'bluefairy-microgreen-tracker/bluefairy-microgreen-tracker.php' );
 		require dirname( __DIR__, 2 ) . '/uninstall.php';
 
-		$this->assertSame( [ [ 'bfmt_features' ], [ 'bfmt_legacy_import' ], [ 'bfmt_legacy_imported_ids' ] ], bfmt_test_calls( 'delete_option' ) );
+		// The import record stays: it describes the trays that stay, and without
+		// it a reinstall would bring back trays the grower deleted.
+		$this->assertSame( [ [ 'bfmt_features' ], [ 'bfmt_legacy_import' ] ], bfmt_test_calls( 'delete_option' ) );
 		$this->assertSame( [], bfmt_test_calls( 'wp_trash_post' ) );
 		$this->assertSame( [], bfmt_test_calls( 'delete_post_meta' ) );
-		$this->assertSame( [ 'delete_option:bfmt_features', 'delete_option:bfmt_legacy_import', 'delete_option:bfmt_legacy_imported_ids' ], bfmt_test_sequence(), 'nothing else ran' );
+		$this->assertSame( [ 'delete_option:bfmt_features', 'delete_option:bfmt_legacy_import' ], bfmt_test_sequence(), 'nothing else ran' );
 	}
 }

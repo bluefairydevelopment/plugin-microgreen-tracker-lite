@@ -23,7 +23,7 @@ If you grow microgreens you already keep this record somewhere — a notebook, a
 
 = What you see =
 
-Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. (With Microgreen Tracker Pro active, you record these from Pro's tray screens instead, where Pro also takes the yield or the reason. A tray Pro finished, or one whose rack slot another tray now uses, cannot be put back from here.) Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
+Every tray in one list, newest first, with a coloured badge showing whether it is still growing, has been harvested, or failed. Mark a tray harvested or failed from its row, and put it back to growing if you tapped the wrong one. (With Microgreen Tracker Pro active, you record these from Pro's tray screens instead, where Pro also takes the yield or the reason. A tray Pro finished, or one whose rack slot another unfinished tray now uses, cannot be put back from here.) Sort by variety or by seeded date. Twenty-five to a page, fetched a page at a time however many seasons you have logged.
 
 = What it does not do =
 
@@ -89,7 +89,7 @@ No.
 * Fixed: "Move to Trash" chosen from the bulk-action menu below the list did nothing. Both menus work.
 * Fixed: a tray with no seeded date — one started with a soak in Pro — was missing from the list. It now appears — after the dated trays in the default newest-first order.
 * Fixed: trays imported from Lite as harvested or failed are given a date, which Pro needs to show their days and cost: the day the row was last changed in Lite (unless that was the day it was entered), else its expected date, else its seeded date — never in the future. (Trays imported by 1.1.0 keep what they were given.)
-* Fixed: the import keeps its own record of which Lite rows it has brought across, so a tray you trash or delete afterwards is never imported again as a duplicate.
+* Fixed: the import keeps its own record of which Lite rows it has brought across, row by row, so a tray you trash or delete afterwards is not imported again, and an import cut short part-way does not repeat itself. The record survives uninstalling. For trays 1.1.0 imported, the record is rebuilt from the trays that remain and from the Lite rows 1.1.0 could have imported, so one you deleted since is not brought back.
 * Fixed: a Lite row with an unreadable expected harvest date was not imported at all. The row imports without that date, and the Microgreens screen now says while any Lite row is still waiting to be imported.
 * Fixed: the edit form could erase a tray's seeded date. A tray not sown yet (started with a soak in Pro) can still be edited without one.
 * Fixed: the Microgreen Tracker Pro panel described features Pro does not have: the harvest date "from how much seed you sowed" (it uses each variety's days to harvest) and "germination rates" (Pro reports yield, harvested and failed counts, and cost per tray). The panel now also lists Pro's daily digest email.

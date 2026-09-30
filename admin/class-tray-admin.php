@@ -155,7 +155,7 @@ class BFMT_Tray_Admin {
 		if ( 'pro' === $blocker ) {
 			self::redirect_with_notice( [ 'error', __( 'This tray was finished in Microgreen Tracker Pro, with its yield or reason. Putting it back here would leave those behind.', 'bluefairy-microgreen-tracker' ) ] );
 		} elseif ( 'slot' === $blocker ) {
-			self::redirect_with_notice( [ 'error', __( 'This tray\'s rack slot is now used by another growing tray, so it cannot go back to growing there.', 'bluefairy-microgreen-tracker' ) ] );
+			self::redirect_with_notice( [ 'error', __( 'This tray\'s rack slot is now used by another tray that is not finished, so it cannot go back to growing there.', 'bluefairy-microgreen-tracker' ) ] );
 		}
 
 		$done = match ( $action ) {

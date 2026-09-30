@@ -155,4 +155,23 @@ final class StatusActionsTest extends TestCase {
 		$this->assertSame( [ 'key' => '_mgtrack_harvest_date', 'compare' => 'NOT EXISTS' ], $args['meta_query'][1] );
 		$this->assertSame( [ 'key' => '_mgtrack_failed', 'compare' => 'NOT EXISTS' ], $args['meta_query'][2] );
 	}
+
+	public function test_the_slot_query_is_one_row_with_every_clause_required(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3' ];
+		$GLOBALS['bfmt_posts_result'] = [];
+
+		BFMT_Status::reopen_blocker( 1 );
+
+		$args = bfmt_test_calls( 'get_posts' )[0][0];
+		$this->assertSame( 'AND', $args['meta_query']['relation'] );
+		$this->assertSame( 1, $args['posts_per_page'] );
+		$this->assertSame( 'mgtrack_tray', $args['post_type'] );
+	}
+
+	public function test_pro_evidence_is_reported_ahead_of_a_taken_slot(): void {
+		$GLOBALS['bfmt_meta'][1]      = [ '_mgtrack_location' => '1A3', '_mgtrack_failed_by' => '1' ];
+		$GLOBALS['bfmt_posts_result'] = [ 2 ];
+
+		$this->assertSame( 'pro', BFMT_Status::reopen_blocker( 1 ) );
+	}
 }

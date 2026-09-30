@@ -94,8 +94,47 @@ class BFMT_Migrator {
 			$ids[] = (int) get_post_meta( (int) $tray_id, self::SOURCE_KEY, true );
 		}
 
+		$ids = array_merge( $ids, self::deleted_under_110( $ids ) );
 		$ids = array_values( array_unique( array_filter( $ids ) ) );
 		update_option( self::IDS_OPTION, $ids, false );
+
+		return $ids;
+	}
+
+	/**
+	 * Lite rows 1.1.0 imported whose trays have since been deleted for good.
+	 *
+	 * 1.1.0 kept no record, so a tray deleted permanently after its import
+	 * leaves no trace — and without one, the next activation would bring it
+	 * back. When 1.1.0 did run an import (its summary option exists), every
+	 * Lite row up to the highest id it imported that 1.1.0 could accept — a
+	 * readable seeded date, and an expected date that was readable or empty —
+	 * was imported then; such a row with no tray now was deleted by the
+	 * grower. Rows 1.1.0 refused stay out, so they are still offered (1.1.1
+	 * imports some of them), and rows added to Lite later have higher ids.
+	 *
+	 * @param  list<int> $found ids recovered from surviving trays
+	 * @return list<int>
+	 */
+	private static function deleted_under_110( array $found ): array {
+		global $wpdb;
+
+		if ( ! $found || false === get_option( self::DONE_OPTION, false ) || ! self::legacy_table_exists() ) {
+			return [];
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- reads Lite's own table, once, while rebuilding the import record.
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, seeded_date, expected_harvest_date FROM %i WHERE id <= %d', self::legacy_table(), max( $found ) ) );
+
+		$ids = [];
+
+		foreach ( $rows as $row ) {
+			$expected = (string) ( $row->expected_harvest_date ?? '' );
+
+			if ( BFMT_Tray::is_date( (string) $row->seeded_date ) && ( '' === $expected || BFMT_Tray::is_date( $expected ) ) ) {
+				$ids[] = (int) $row->id;
+			}
+		}
 
 		return $ids;
 	}
@@ -158,9 +197,12 @@ class BFMT_Migrator {
 			update_post_meta( $tray_id, self::SOURCE_KEY, (int) $row->id );
 			$imported[] = (int) $row->id;
 			++$result['imported'];
+
+			// Recorded per row, not once at the end: an import cut off by a
+			// timeout must not import these rows again on the next activation.
+			update_option( self::IDS_OPTION, $imported, false );
 		}
 
-		update_option( self::IDS_OPTION, $imported, false );
 		update_option( self::DONE_OPTION, $result, false );
 
 		return $result;

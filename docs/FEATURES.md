@@ -50,7 +50,7 @@ The three row links are hidden while Microgreen Tracker Pro is active: Pro
 records a harvest with its yield and a failure with its reason, from its own
 tray screens. With Pro deactivated, **Mark growing** is not offered on a tray
 Pro finished (it would leave Pro's yield or reason behind), nor on one whose
-rack slot another growing tray now uses (it would put two trays in one slot). A
+rack slot another unfinished tray now uses (it would put two trays in one slot). A
 tray finished here by mistake can be put back while its slot is still free.
 Harvest and failure are stored as dates, which is how Pro reads them.
 
@@ -100,8 +100,11 @@ seeded date. Never a date in the future. Fixing a row in Lite changes it that
 day, so check the finish date in Pro after importing a fixed row.
 
 The import keeps its own record of which Lite rows it has brought across
-(`bfmt_legacy_imported_ids`), so a tray trashed or deleted afterwards is never
-imported again.
+(`bfmt_legacy_imported_ids`), written row by row, so a tray trashed or deleted
+afterwards is not imported again and an import cut short does not repeat
+itself. Uninstalling keeps the record, as it keeps the trays. After an update
+from 1.1.0, which kept no record, it is rebuilt from the remaining trays and
+from the Lite rows 1.1.0 could have imported.
 
 ## Extension points
 

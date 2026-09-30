@@ -13,7 +13,7 @@
   and frees rack slots, and a one-click change here would skip all of that.
   With Pro off, Mark growing is not offered (`BFMT_Status::reopen_blocker()`)
   on a tray Pro finished — a `_by` stamp, yield, sale or failure reason — or
-  on one whose rack slot another growing tray now uses. A tray finished here
+  on one whose rack slot another unfinished tray now uses. A tray finished here
   by mistake can be put back while its slot is free.
 - Every row link carries an `aria-label` naming its tray.
 
@@ -33,8 +33,12 @@
 - The importer decided "already imported" from trays carrying
   `_bfmt_legacy_grow_id`, which cannot see trashed or deleted trays, so a
   trashed tray was imported again. It now keeps the imported Lite ids in
-  `bfmt_legacy_imported_ids` (rebuilt once from existing trays, trash
-  included), and counts rows still waiting by id, not by count.
+  `bfmt_legacy_imported_ids`, written after each row so an interrupted import
+  does not repeat, kept on uninstall, and counts rows still waiting by id, not
+  by count. On the first read after an update from 1.1.0 the record is
+  rebuilt from existing trays (trash included) plus the Lite rows, up to the
+  highest id 1.1.0 imported, that 1.1.0's validation would have accepted —
+  so a tray deleted since is not brought back.
 - A Lite row whose optional expected date was `0000-00-00` (MySQL under
   WordPress runs without NO_ZERO_DATE) failed to import; the date is now
   dropped and the row imported. While any Lite row is still waiting, the

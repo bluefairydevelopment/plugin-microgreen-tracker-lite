@@ -63,6 +63,7 @@ function bfmt_test_reset(): void {
 	$GLOBALS['bfmt_query_result'] = [ 'posts' => [], 'found_posts' => 0, 'max_num_pages' => 0 ];
 	$GLOBALS['bfmt_statuses']     = [];
 	$GLOBALS['bfmt_nonce_ok']     = true;
+	$GLOBALS['bfmt_throw_on_insert'] = 0;
 	$GLOBALS['wpdb']              = new BFMT_Test_No_Legacy_Wpdb();
 	$_GET = $_POST = $_REQUEST = [];
 }
@@ -210,6 +211,11 @@ function wp_set_object_terms( $id, $terms, $taxonomy, $append = false ) {
 
 function wp_insert_post( $args, $wp_error = false ) {
 	bfmt_test_record( 'wp_insert_post', [ $args, $wp_error ] );
+
+	// A test can make the Nth insert die, the way a PHP timeout would.
+	if ( ! empty( $GLOBALS['bfmt_throw_on_insert'] ) && count( bfmt_test_calls( 'wp_insert_post' ) ) === $GLOBALS['bfmt_throw_on_insert'] ) {
+		throw new RuntimeException( 'insert died' );
+	}
 
 	if ( $GLOBALS['bfmt_insert_error'] ) {
 		return $GLOBALS['bfmt_insert_error'];

@@ -45,10 +45,8 @@ class BFMT_Migrator {
 			return 0;
 		}
 
-		$table = self::legacy_table();
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the name comes from $wpdb->prefix and a constant in this file.
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a one-time import count, not cacheable.
+		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', self::legacy_table() ) );
 
 		return max( 0, $total - self::imported_count() );
 	}
@@ -78,10 +76,8 @@ class BFMT_Migrator {
 			return $result;
 		}
 
-		$table = self::legacy_table();
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- see above.
-		$rows = $wpdb->get_results( "SELECT * FROM `{$table}` ORDER BY id ASC" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a one-time import, not cacheable.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id ASC', self::legacy_table() ) );
 
 		foreach ( (array) $rows as $row ) {
 			if ( self::already_imported( (int) $row->id ) ) {

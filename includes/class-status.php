@@ -70,6 +70,12 @@ class BFMT_Status {
 	}
 
 	/**
+	 * Text and background colour for each status.
+	 *
+	 * The value is "text;background:background", the shape Pro 1.4.0 already
+	 * returns through the filter. Changing it would break an add-on already on
+	 * customers' sites, so the shape stays and stylesheet() parses it.
+	 *
 	 * @return array<string, string> status => "colour;background:colour"
 	 */
 	public static function colours(): array {
@@ -80,13 +86,70 @@ class BFMT_Status {
 		] );
 	}
 
+	/**
+	 * The badge for one status.
+	 *
+	 * Colour comes from the admin stylesheet, not a style attribute: the class
+	 * names a rule stylesheet() writes for every status colours() knows,
+	 * including the ones an add-on contributes.
+	 */
 	public static function badge( string $status ): string {
-		$colour = self::colours()[ $status ] ?? '#374151;background:#f3f4f6';
-
 		return sprintf(
-			'<span style="%s">%s</span>',
-			esc_attr( 'color:' . $colour . ';padding:2px 8px;border-radius:3px;font-size:.8em;font-weight:600;display:inline-block;' ),
+			'<span class="bfmt-badge %s">%s</span>',
+			esc_attr( self::badge_class( $status ) ),
 			esc_html( self::label( $status ) )
 		);
+	}
+
+	/**
+	 * The modifier class for a status.
+	 *
+	 * Status keys come from a filter, so anything outside a-z, 0-9, _ and - is
+	 * dropped rather than trusted to be a valid class name.
+	 */
+	public static function badge_class( string $status ): string {
+		return 'bfmt-badge--' . preg_replace( '/[^a-z0-9_-]/', '', strtolower( $status ) );
+	}
+
+	/**
+	 * One CSS rule per status, for wp_add_inline_style().
+	 *
+	 * The colours arrive through a filter and end up inside a <style> element,
+	 * so each one has to be a hex colour and nothing else. An entry that does
+	 * not parse is left out and that status falls back to the neutral colour in
+	 * the stylesheet, rather than letting a stray "}" or "</style>" through.
+	 */
+	public static function stylesheet(): string {
+		$rules = [];
+
+		foreach ( self::colours() as $status => $value ) {
+			$parsed = self::parse_colour( (string) $value );
+
+			if ( null === $parsed ) {
+				continue;
+			}
+
+			$rules[] = sprintf(
+				'.bfmt-badge.%s{color:%s;background:%s}',
+				self::badge_class( (string) $status ),
+				$parsed['color'],
+				$parsed['background']
+			);
+		}
+
+		return implode( "\n", $rules );
+	}
+
+	/**
+	 * Split "text;background:background" into two checked hex colours.
+	 *
+	 * @return array{color:string, background:string}|null
+	 */
+	public static function parse_colour( string $value ): ?array {
+		if ( ! preg_match( '/^\s*(#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s*;\s*background\s*:\s*(#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s*;?\s*$/iD', $value, $m ) ) {
+			return null;
+		}
+
+		return [ 'color' => strtolower( $m[1] ), 'background' => strtolower( $m[2] ) ];
 	}
 }

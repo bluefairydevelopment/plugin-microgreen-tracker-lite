@@ -1,0 +1,22 @@
+/*
+ * BlueFairy Microgreen Tracker — the Microgreens screen.
+ *
+ * Status colours are not here: BFMT_Status::stylesheet() adds one rule per
+ * status as inline style on this handle, so a status an add-on contributes
+ * gets its colour the same way the three built-in ones do.
+ */
+
+.bfmt-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: .8em;
+	font-weight: 600;
+	color: #374151;
+	background: #f3f4f6;
+}
+
+.bfmt-pro-features {
+	list-style: disc;
+	margin-left: 1.5em;
+}

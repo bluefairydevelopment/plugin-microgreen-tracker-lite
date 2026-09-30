@@ -17,6 +17,24 @@ class BFMT_Tray_Admin {
 	public static function init(): void {
 		add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
 		add_action( 'admin_init', [ __CLASS__, 'handle_actions' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
+	}
+
+	/**
+	 * The screen's stylesheet and script, on this screen only.
+	 *
+	 * The status colours go in as inline style on the same handle, one rule per
+	 * status, so an add-on's statuses are coloured by the same mechanism as the
+	 * built-in three.
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'toplevel_page_' . self::PAGE_SLUG !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_style( 'bfmt-admin', BFMT_URL . 'assets/css/admin.css', [], BFMT_VERSION );
+		wp_add_inline_style( 'bfmt-admin', BFMT_Status::stylesheet() );
+		wp_enqueue_script( 'bfmt-admin', BFMT_URL . 'assets/js/admin.js', [], BFMT_VERSION, [ 'in_footer' => true ] );
 	}
 
 	/**

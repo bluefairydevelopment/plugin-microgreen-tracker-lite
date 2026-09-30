@@ -13,6 +13,8 @@ includes/class-status.php          the derived status, and the filter Pro replac
 includes/class-feature-registry.php the switches Pro adds its own to
 includes/class-migrator.php        1.0.0's table, imported once and left in place
 admin/                             the list, the form, the Pro panel
+assets/                            the Microgreens screen's stylesheet and script (enqueued there only)
+wp-org-assets/                     WordPress.org banners, icons, screenshots (never in the zip)
 ```
 
 `BFMT_Tray` is the only place that knows where a tray's data lives. Pro calls
@@ -33,13 +35,17 @@ rewritten class.
 
 ```
 composer install
-vendor/bin/phpunit                                          # 20 unit tests
+vendor/bin/phpunit                                          # 52 unit tests
 wp eval-file .../tests/integration-checks.php               # from the site root
 ```
 
 The unit tests have been checked against deliberate mutations: dropping
 `checkdate()`, reversing the harvested/failed precedence, and removing the
-status filter all turn the suite red.
+status filter all turn the suite red. So do, since 1.1.1: putting back the old
+Pro-panel wording, a style attribute on a badge or the panel list, an onclick on
+the trash link, a manual `load_plugin_textdomain()`, an interpolated table name
+in the importer, a colour check that accepts anything, and enqueueing the
+screen's assets on every admin page.
 
 ## Licence
 

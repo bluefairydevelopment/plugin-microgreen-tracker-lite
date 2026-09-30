@@ -20,8 +20,6 @@ class BFMT_Plugin {
 	 * registry, the settings screen or the list table read them.
 	 */
 	public static function boot(): void {
-		load_plugin_textdomain( 'bluefairy-microgreen-tracker', false, dirname( BFMT_BASENAME ) . '/languages' );
-
 		BFMT_Tray::init();
 
 		do_action( 'bfmt_loaded' );

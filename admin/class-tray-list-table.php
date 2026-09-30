@@ -95,14 +95,14 @@ class BFMT_Tray_List_Table extends WP_List_Table {
 		$page = admin_url( 'admin.php?page=' . BFMT_Tray_Admin::PAGE_SLUG );
 
 		return sprintf(
-			'<a href="%s">%s</a> | <a href="%s" onclick="return confirm(\'%s\')">%s</a>',
+			'<a href="%s">%s</a> | <a href="%s" data-bfmt-confirm="%s">%s</a>',
 			esc_url( add_query_arg( [ 'action' => 'edit', 'tray_id' => $tray_id ], $page ) ),
 			esc_html__( 'Edit', 'bluefairy-microgreen-tracker' ),
 			esc_url( wp_nonce_url(
 				add_query_arg( [ 'action' => 'trash', 'tray_id' => $tray_id ], $page ),
 				'bfmt_trash_tray_' . $tray_id
 			) ),
-			esc_js( __( 'Move this tray to the trash?', 'bluefairy-microgreen-tracker' ) ),
+			esc_attr__( 'Move this tray to the trash?', 'bluefairy-microgreen-tracker' ),
 			esc_html__( 'Trash', 'bluefairy-microgreen-tracker' )
 		);
 	}

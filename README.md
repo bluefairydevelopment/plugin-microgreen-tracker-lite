@@ -35,7 +35,7 @@ rewritten class.
 
 ```
 composer install
-vendor/bin/phpunit                                          # 52 unit tests
+vendor/bin/phpunit                                          # 146 unit tests
 wp eval-file .../tests/integration-checks.php               # from the site root
 ```
 
@@ -45,7 +45,10 @@ status filter all turn the suite red. So do, since 1.1.1: putting back the old
 Pro-panel wording, a style attribute on a badge or the panel list, an onclick on
 the trash link, a manual `load_plugin_textdomain()`, an interpolated table name
 in the importer, a colour check that accepts anything, and enqueueing the
-screen's assets on every admin page.
+screen's assets on every admin page. The full 1.1.1 sweep was 51 mutations
+across every class, all killed from a green baseline. The stubs in
+`tests/stubs.php` record every side effect, so a deleted hook or a missing
+nonce check is a failed assertion, not a silent pass.
 
 ## Licence
 

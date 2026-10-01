@@ -429,8 +429,9 @@ class BFMT_Tray_Admin {
 	 * The help line under Expected harvest.
 	 *
 	 * Pro fills the date in when a tray is ADDED with it blank, from the
-	 * variety's days-to-harvest range, and only if the variety has one. It does
-	 * nothing on edit, so the edit form does not promise it.
+	 * variety's days-to-harvest range, and only if the variety has one. Pro
+	 * 1.5.0 also fills it on edit, but 1.4.0 does not, so the edit form makes
+	 * no promise.
 	 */
 	public static function harvest_help( bool $editing ): string {
 		if ( $editing ) {

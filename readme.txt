@@ -85,7 +85,7 @@ No.
 
 = 1.1.2 =
 * Changed: with Microgreen Tracker Pro active there is one **Microgreens** menu, not two. This plugin's tray list is **All Trays** inside Pro's menu. Its address does not change.
-* Fixed: the comparison with Pro said a failure cannot be undone in Pro. Pro 1.5.0 adds **Undo failure**.
+* Fixed: the comparison with Pro got undoing wrong. It said Pro can undo a harvest by clearing its date, which Pro cannot do, and that Pro cannot undo a failure. Pro 1.5.0 adds **Undo failure**.
 
 = 1.1.1 =
 * Added: mark a tray harvested or failed from its row in the list, and put it back to growing if you marked the wrong one. Until now only trays imported from Lite, or recorded with Pro, could show as harvested or failed. With Pro active these stay on Pro's screens, which record the yield and the reason too.

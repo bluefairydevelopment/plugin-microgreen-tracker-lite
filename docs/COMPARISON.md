@@ -10,7 +10,7 @@ everything downstream.
 | Expected harvest date you type | yes | yes, inherited |
 | Tray list with status, sortable, paged | yes | yes, inherited |
 | Mark a tray harvested or failed | yes, from the tray list | yes, from Pro's tray screens (with yield or reason) |
-| Undo a harvest or a failure | yes (Mark growing) | yes: a harvest by clearing its date, a failure with Undo failure (Pro 1.5.0 and later) |
+| Undo a harvest or a failure | yes (Mark growing) | a failure, with Undo failure (Pro 1.5.0 and later); a harvest cannot be undone |
 | Trays kept on uninstall | yes | yes, inherited |
 | **Expected harvest worked out from the variety** | — | **yes** |
 | **Soak, weight on, germination, darkness lifted milestones** | — | **yes** |

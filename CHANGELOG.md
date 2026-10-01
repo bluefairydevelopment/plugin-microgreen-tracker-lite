@@ -13,8 +13,9 @@
   `microgreens_page_bfmt-trays` under Pro, instead of a fixed string.
 
 ### Fixed
-- docs/FEATURES.md and docs/COMPARISON.md said a failure cannot be undone in
-  Pro. Pro 1.5.0 adds Undo failure.
+- docs/FEATURES.md and docs/COMPARISON.md said Pro can undo a harvest by
+  clearing its date. Pro has no harvest date field to clear. They also said a
+  failure cannot be undone in Pro. Pro 1.5.0 adds Undo failure.
 
 ## [1.1.1] — 2026-09-30
 

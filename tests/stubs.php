@@ -365,6 +365,16 @@ function add_menu_page( ...$args ) {
 	return 'toplevel_page_' . $args[3];
 }
 
+/**
+ * Core names a submenu page's hook after its parent's menu title; every
+ * parent this plugin uses is titled "Microgreens".
+ */
+function add_submenu_page( ...$args ) {
+	bfmt_test_record( 'add_submenu_page', $args );
+
+	return 'microgreens_page_' . $args[4];
+}
+
 function load_plugin_textdomain( ...$args ) {
 	bfmt_test_record( 'load_plugin_textdomain', $args );
 

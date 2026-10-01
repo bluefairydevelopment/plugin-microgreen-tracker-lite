@@ -4,7 +4,7 @@ Tags: microgreens, farm, growing, tracker, agriculture
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,7 +52,7 @@ https://wordpress.bluefairydevelopment.com/product/bluefairy-microgreen-tracker-
 
 1. Upload the `bluefairy-microgreen-tracker` folder to `/wp-content/plugins/`, or install the zip through **Plugins → Add New → Upload Plugin**.
 2. Activate it.
-3. **Microgreens** appears in the admin menu. Add your first tray.
+3. **Microgreens** appears in the admin menu. Add your first tray. (With Microgreen Tracker Pro active, this list is **Microgreens → All Trays**, inside Pro's menu.)
 
 == Frequently Asked Questions ==
 
@@ -82,6 +82,10 @@ No.
 2. Adding a tray: variety, size, seeded date, expected harvest.
 
 == Changelog ==
+
+= 1.1.2 =
+* Changed: with Microgreen Tracker Pro active there is one **Microgreens** menu, not two. This plugin's tray list is **All Trays** inside Pro's menu. Its address does not change.
+* Fixed: the comparison with Pro got undoing wrong. It said Pro can undo a harvest by clearing its date, which Pro cannot do, and that Pro cannot undo a failure. Pro 1.5.0 adds **Undo failure**.
 
 = 1.1.1 =
 * Added: mark a tray harvested or failed from its row in the list, and put it back to growing if you marked the wrong one. Until now only trays imported from Lite, or recorded with Pro, could show as harvested or failed. With Pro active these stay on Pro's screens, which record the yield and the reason too.

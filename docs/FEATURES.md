@@ -156,7 +156,7 @@ lives, and nothing to migrate when you upgrade.
 | Expected harvest date you type | Yes | Yes |
 | Tray list with status, sortable, paged | Yes | Yes |
 | Mark a tray harvested or failed | Yes, from Pro's tray screens, with the yield or the reason | Yes, from the tray list |
-| Undo a harvest or a failure | A harvest, by clearing its date; a failure cannot be undone in Pro 1.4.0 | Yes — **Mark growing** |
+| Undo a harvest or a failure | Yes — a harvest by clearing its date on Edit Tray Details, a failure with **Undo failure** (Pro 1.5.0 and later) | Yes — **Mark growing** |
 | Trays kept on uninstall | Yes | Yes |
 | **Expected harvest worked out from the variety** | Yes | — |
 | **Soak, weight on, germination, darkness lifted milestones** | Yes | — |

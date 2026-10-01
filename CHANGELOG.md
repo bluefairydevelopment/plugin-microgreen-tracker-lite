@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.2] — 2026-09-30
+
+### Changed
+- With Microgreen Tracker Pro active, the tray list registers as a submenu of
+  Pro's `mgtrack` menu, as **All Trays** at position 3. It no longer adds a
+  second top-level Microgreens menu (WPMAP-99). The page slug, `bfmt-trays`,
+  and so its address, are unchanged. `register_menu()` now runs on
+  `admin_menu` at priority 20, after Pro's top-level page exists. The
+  stylesheet and script enqueue compares against the hook suffix WordPress
+  actually returned, which is `toplevel_page_bfmt-trays` on its own and
+  `microgreens_page_bfmt-trays` under Pro, instead of a fixed string.
+
+### Fixed
+- docs/FEATURES.md and docs/COMPARISON.md said a failure cannot be undone in
+  Pro. Pro 1.5.0 adds Undo failure.
+
 ## [1.1.1] — 2026-09-30
 
 ### Added

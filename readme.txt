@@ -1,5 +1,6 @@
 === BlueFairy Microgreen Tracker ===
 Contributors: bluefairydevelopment
+Donate link: https://ko-fi.com/bluefairydevelopment
 Tags: microgreens, farm, growing, tracker, agriculture
 Requires at least: 6.5
 Tested up to: 7.1

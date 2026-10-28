@@ -42,7 +42,7 @@ HTML LONG DESCRIPTION
   <li><strong>A grow-room role and five front-end shortcodes</strong> — staff log trays and milestones from a phone, without needing wp-admin.</li>
 </ul>
 
-<p><a href="/product/bluefairy-microgreen-tracker-pro/">Get Microgreen Tracker Pro — $125</a></p>
+<p><a href="/product/bluefairy-microgreen-tracker-pro/">Get Microgreen Tracker Pro — $25</a></p>
 
 
 NOTES

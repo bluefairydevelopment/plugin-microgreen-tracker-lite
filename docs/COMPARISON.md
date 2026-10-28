@@ -60,4 +60,4 @@ two matched was worth an hour.
 ## Pricing
 
 Free plugin: $0, wordpress.org.
-Pro: $125 once, lifetime licence, one site. Requires the free plugin.
+Pro: $25 once, lifetime licence, one site. Requires the free plugin.

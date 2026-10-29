@@ -1,0 +1,22 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  phpVersion: 80100
+  level: 6
+  # Stored options, post meta and filter values can be any type at runtime;
+  # keep the code's guards for them rather than trusting the docblock types.
+  treatPhpDocTypesAsCertain: false
+  # Every shipped PHP file (the release zip carries these; vendor/ and tests/
+  # are not analysed).
+  paths:
+    - bluefairy-microgreen-tracker.php
+    - uninstall.php
+    - includes/
+    - admin/
+  bootstrapFiles:
+    - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+    - tests/phpstan/constants.php
+  # BFMT_* constants are defined in the main plugin file.
+  scanFiles:
+    - bluefairy-microgreen-tracker.php

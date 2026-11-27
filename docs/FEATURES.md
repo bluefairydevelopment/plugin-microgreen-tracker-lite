@@ -150,7 +150,7 @@ This plugin is the base of a pair. Pro is an add-on: it extends this plugin
 rather than replacing it, so there is one tray record, one place your data
 lives, and nothing to migrate when you upgrade.
 
-| | Pro — $25 | Free |
+| | Pro | Free |
 |---|---|---|
 | Record a tray: variety, size, seeded date | Yes | Yes |
 | Expected harvest date you type | Yes | Yes |
